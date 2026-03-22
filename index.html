@@ -262,3 +262,10 @@
     window.onload = () => {
         const saved = localStorage.getItem('relationMapData_v51');
         if(saved) {
+            const d = JSON.parse(saved); cy.add(d.elements); groups = d.groups; groupOrder = d.groupOrder || Object.keys(groups);
+            updateUI(); drawGroups(); cy.fit(null, 50);
+        }
+    };
+</script>
+</body>
+</html>
