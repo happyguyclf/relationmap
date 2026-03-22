@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <title>RelationMap v5.2</title>
+    <title>RelationMap v5.3</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.26.0/cytoscape.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/webcola@3.4.0/WebCola/cola.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/cytoscape-cola@2.5.1/cytoscape-cola.min.js"></script>
@@ -26,19 +26,18 @@
         #overlay-canvas { position: absolute; width: 100%; height: 100%; z-index: 2; pointer-events: none; }
 
         input, textarea, select { width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 13px; margin-top: 5px; outline: none; background: white; }
-        button { width: 100%; padding: 10px; margin-bottom: 6px; border-radius: 8px; border: 1px solid #e2e8f0; cursor: pointer; font-weight: 600; font-size: 13px; background: white; }
+        button { width: 100%; padding: 10px; margin-bottom: 6px; border-radius: 8px; border: 1px solid #e2e8f0; cursor: pointer; font-weight: 600; font-size: 12px; background: white; }
         .btn-main { background: var(--primary); color: white; border: none; }
         .btn-group { background: #10B981; color: white; border: none; }
         
         .panel { display: none; background: #f1f5f9; padding: 12px; border-radius: 10px; margin-bottom: 10px; border: 1px solid #cbd5e1; }
         .section-label { font-size: 10px; font-weight: 800; color: #94a3b8; text-transform: uppercase; margin: 10px 0 5px; }
         
-        .color-row { display: flex; gap: 6px; padding: 8px 0; overflow-x: auto; }
-        .color-dot { min-width: 28px; height: 28px; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 0 1px #cbd5e1; cursor: pointer; }
-        .color-dot.active { box-shadow: 0 0 0 2px var(--primary); transform: scale(1.1); }
+        .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4px; }
+        .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; }
 
-        .member-checklist { max-height: 120px; overflow-y: auto; background: white; border: 1px solid #e2e8f0; border-radius: 8px; padding: 8px; margin: 5px 0; }
-        .check-item { display: flex; align-items: center; padding: 8px 0; border-bottom: 1px solid #f1f5f9; font-size: 13px; }
+        .member-checklist { max-height: 100px; overflow-y: auto; background: white; border: 1px solid #e2e8f0; border-radius: 8px; padding: 8px; margin: 5px 0; }
+        .check-item { display: flex; align-items: center; padding: 6px 0; border-bottom: 1px solid #f1f5f9; font-size: 13px; }
         
         .status-pill { position: absolute; top: 10px; left: 10px; z-index: 100; background: rgba(0,0,0,0.7); color: white; padding: 4px 12px; border-radius: 20px; font-size: 10px; }
         .back-link { color: var(--primary); font-size: 12px; cursor: pointer; display: block; margin-bottom: 8px; font-weight: bold; }
@@ -48,11 +47,11 @@
 
 <div id="main-container">
     <div id="sidebar">
-        <input type="text" id="search-input" placeholder="🔍 Search..." oninput="runSearch()">
+        <input type="text" id="search-input" placeholder="🔍 Search Map..." oninput="runSearch()">
         
-        <div style="display:flex; gap:4px; margin-bottom: 10px; margin-top: 10px;">
-            <button onclick="saveData()" style="flex:1">Export JSON</button>
-            <button onclick="clearCache()" style="flex:1; color:red;">Reset App</button>
+        <div style="display:flex; gap:4px; margin-top: 10px;">
+            <button onclick="saveData()" style="flex:1">Export</button>
+            <button onclick="clearCache()" style="flex:1; color:red;">Reset</button>
         </div>
 
         <button class="btn-main" onclick="addPerson()">+ Add Person</button>
@@ -60,34 +59,41 @@
         <button id="connBtn" onclick="toggleConnectionMode()">Link Mode: OFF</button>
 
         <div id="edit-panel" class="panel">
-            <span class="back-link" onclick="hidePanels()">← Back to List</span>
+            <span class="back-link" onclick="hidePanels()">← Back</span>
             <input type="text" id="edit-node-name" oninput="updateNodeName()" placeholder="Name">
-            <textarea id="node-notes" oninput="updateNotes()" placeholder="Notes..."></textarea>
+            <textarea id="node-notes" oninput="updateNotes()" placeholder="Notes (shown on map)..."></textarea>
             
-            <div class="section-label">Groups</div>
-            <div id="person-group-tags" class="member-checklist" style="max-height: 80px;"></div>
+            <div class="section-label">Member of Groups</div>
+            <div id="person-group-tags" class="member-checklist"></div>
             
-            <div class="section-label">Color</div>
-            <div class="color-row" id="node-color-picker"></div>
-            <button onclick="deleteSelected()" style="color:#ef4444; border:none; margin-top:5px;">Delete Person</button>
+            <button onclick="deleteSelected()" style="color:#ef4444; border:none; margin-top:10px;">Delete Person</button>
         </div>
 
         <div id="edge-panel" class="panel" style="background:#fff7ed;">
             <span class="back-link" onclick="hidePanels()">← Back</span>
             <input type="text" id="edge-label-input" oninput="updateEdgeLabel()" placeholder="Label">
-            <div class="section-label">Line Style</div>
-            <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:4px;">
+            
+            <div class="section-label">Style</div>
+            <div class="grid-3">
                 <button onclick="setEdgeStyle('solid')">Solid</button>
                 <button onclick="setEdgeStyle('dashed')">Dash</button>
                 <button onclick="setEdgeStyle('dotted')">Dot</button>
             </div>
-            <button onclick="deleteSelected()" style="color:#ef4444; border:none;">Delete Link</button>
+            
+            <div class="section-label">Arrows</div>
+            <div class="grid-4">
+                <button onclick="setEdgeArrow('none')">--</button>
+                <button onclick="setEdgeArrow('forward')">→</button>
+                <button onclick="setEdgeArrow('backward')">←</button>
+                <button onclick="setEdgeArrow('both')">↔</button>
+            </div>
+            
+            <button onclick="deleteSelected()" style="color:#ef4444; border:none; margin-top:10px;">Delete Link</button>
         </div>
 
         <div id="group-edit-panel" class="panel" style="background:#f0fdf4;">
-            <span class="back-link" onclick="hidePanels()">← Back to List</span>
+            <span class="back-link" onclick="hidePanels()">← Back</span>
             <input type="text" id="group-name-input" oninput="updateGroupName()" placeholder="Group Name">
-            <div class="color-row" id="group-color-picker"></div>
             <div class="section-label">Members</div>
             <div id="member-checklist-container" class="member-checklist"></div>
             <button onclick="reorderGroup('front')">Bring to Front</button>
@@ -98,7 +104,7 @@
     </div>
 
     <div id="cy-container">
-        <div class="status-pill" id="save-status">V5.2 Synced</div>
+        <div class="status-pill" id="save-status">V5.3 Online</div>
         <div id="cy"></div>
         <canvas id="overlay-canvas"></canvas>
     </div>
@@ -113,16 +119,31 @@
     const cy = cytoscape({
         container: document.getElementById('cy'),
         style: [
-            { selector: 'node[type="person"]', style: { 'width': 65, 'height': 65, 'background-color': 'data(color)', 'label': 'data(name)', 'text-valign': 'center', 'color': '#fff', 'font-size': '12px', 'font-weight': 'bold', 'text-wrap': 'wrap', 'text-max-width': '60px', 'text-outline-width': 1.5, 'text-outline-color': '#000' }},
-            { selector: 'edge', style: { 'width': 3, 'line-color': '#94a3b8', 'curve-style': 'bezier', 'target-arrow-shape': 'data(arrow)', 'line-style': 'data(lineStyle)', 'label': 'data(label)', 'edge-text-rotation': 'autorotate', 'font-size': '10px', 'text-background-opacity': 1, 'text-background-color': '#fff' }},
+            { selector: 'node[type="person"]', style: { 
+                'width': 65, 'height': 65, 'background-color': '#4F46E5', 
+                'label': 'data(name)', 'text-valign': 'center', 'color': '#fff', 
+                'font-size': '12px', 'font-weight': 'bold', 'text-wrap': 'wrap', 'text-max-width': '60px',
+                'text-outline-width': 1.5, 'text-outline-color': '#000' 
+            }},
+            { selector: 'node[type="person"][notes]', style: {
+                'label': 'data(name)\n(data(notes))', // Restored sub-label
+                'text-wrap': 'wrap'
+            }},
+            { selector: 'edge', style: { 
+                'width': 3, 'line-color': '#94a3b8', 'curve-style': 'bezier', 
+                'target-arrow-shape': 'data(arrow)', 'source-arrow-shape': 'data(sArrow)', 
+                'line-style': 'data(lineStyle)', 'label': 'data(label)', 
+                'edge-text-rotation': 'autorotate', 'font-size': '10px', 
+                'text-background-opacity': 1, 'text-background-color': '#fff' 
+            }},
             { selector: ':selected', style: { 'border-width': 6, 'border-color': '#fbbf24' }}
         ]
     });
 
     function autoSave() {
         const data = { elements: cy.elements().map(e => ({ group: e.isNode()?'nodes':'edges', data: e.data(), position: e.position() })), groups, groupOrder };
-        localStorage.setItem('relationMapData_v52', JSON.stringify(data));
-        document.getElementById('save-status').innerText = "✓ Saved " + new Date().toLocaleTimeString();
+        localStorage.setItem('relationMapData_v53', JSON.stringify(data));
+        document.getElementById('save-status').innerText = "✓ Synced " + new Date().toLocaleTimeString();
     }
     cy.on('position dragfree add remove data', autoSave);
 
@@ -134,20 +155,16 @@
             const g = groups[id]; if(!g || !g.visible || !g.members.length) return;
             const nodes = g.members.map(mid => cy.getElementById(mid)).filter(n => n.length > 0);
             if(!nodes.length) return;
-            
             let pts = [], minX = Infinity, minY = Infinity;
             nodes.forEach(n => {
                 const pos = n.renderedPosition(); const r = 45 * zoom;
                 if(pos.x < minX) minX = pos.x; if(pos.y < minY) minY = pos.y;
                 for(let i=0; i<8; i++) pts.push({ x: pos.x + r * Math.cos(i*Math.PI/4), y: pos.y + r * Math.sin(i*Math.PI/4) });
             });
-            
             const hull = nodes.length > 1 ? getConvexHull(pts) : pts;
             ctx.beginPath(); ctx.fillStyle = g.color + '22'; ctx.strokeStyle = g.color + '66';
             ctx.moveTo(hull[0].x, hull[0].y); hull.forEach(p => ctx.lineTo(p.x, p.y));
             ctx.closePath(); ctx.fill(); ctx.stroke();
-            
-            // SHOW GROUP NAME ON MAP
             ctx.fillStyle = g.color; ctx.font = `bold ${Math.max(12, 14*zoom)}px sans-serif`;
             ctx.fillText(g.name.toUpperCase(), minX - (20*zoom), minY - (50*zoom));
         });
@@ -170,7 +187,7 @@
             if(connectionMode) {
                 selectedNodes.push(ele.id());
                 if(selectedNodes.length === 2) { 
-                    cy.add({group:'edges', data:{source:selectedNodes[0], target:selectedNodes[1], arrow:'triangle', lineStyle:'solid', label:''}}); 
+                    cy.add({group:'edges', data:{source:selectedNodes[0], target:selectedNodes[1], arrow:'triangle', sArrow:'none', lineStyle:'solid', label:''}}); 
                     toggleConnectionMode(); 
                 }
             } else { showPersonEdit(ele); }
@@ -181,24 +198,18 @@
         hidePanels(); document.getElementById('edit-panel').style.display='block';
         document.getElementById('edit-node-name').value = node.data('name');
         document.getElementById('node-notes').value = node.data('notes')||'';
-        
-        // Restore Group Selection in Person Panel
         const tags = document.getElementById('person-group-tags'); tags.innerHTML = '';
         groupOrder.forEach(gid => {
             const item = document.createElement('div'); item.className = 'check-item';
             item.innerHTML = `<input type="checkbox" ${groups[gid].members.includes(node.id())?'checked':''} onchange="toggleMember('${gid}','${node.id()}')"> ${groups[gid].name}`;
             tags.appendChild(item);
         });
-
-        const picker = document.getElementById('node-color-picker'); picker.innerHTML='';
-        palette.forEach(c => {
-            const d = document.createElement('div'); d.className = `color-dot ${node.data('color')===c?'active':''}`;
-            d.style.backgroundColor = c; d.onclick = () => { node.data('color', c); showPersonEdit(node); };
-            picker.appendChild(d);
-        });
     }
 
-    function showEdgeEdit(edge) { hidePanels(); document.getElementById('edge-panel').style.display='block'; document.getElementById('edge-label-input').value = edge.data('label')||''; }
+    function showEdgeEdit(edge) {
+        hidePanels(); document.getElementById('edge-panel').style.display='block';
+        document.getElementById('edge-label-input').value = edge.data('label')||'';
+    }
 
     function showGroupEdit(id) {
         activeGroupId = id; hidePanels(); document.getElementById('group-edit-panel').style.display='block';
@@ -208,12 +219,6 @@
             const item = document.createElement('div'); item.className = 'check-item';
             item.innerHTML = `<input type="checkbox" ${groups[id].members.includes(p.id())?'checked':''} onchange="toggleMember('${id}','${p.id()}')"> ${p.data('name')}`;
             container.appendChild(item);
-        });
-        const picker = document.getElementById('group-color-picker'); picker.innerHTML='';
-        palette.forEach(c => {
-            const d = document.createElement('div'); d.className = `color-dot ${groups[id].color===c?'active':''}`;
-            d.style.backgroundColor = c; d.onclick = () => { groups[id].color = c; showGroupEdit(id); drawGroups(); };
-            picker.appendChild(d);
         });
     }
 
@@ -226,9 +231,16 @@
     function updateNotes() { const n = cy.$(':selected')[0]; if(n) n.data('notes', document.getElementById('node-notes').value); }
     function updateEdgeLabel() { const e = cy.$(':selected')[0]; if(e && e.isEdge()) e.data('label', document.getElementById('edge-label-input').value); }
     function setEdgeStyle(s) { const e = cy.$(':selected'); if(e.isEdge()) e.data('lineStyle', s); }
+    function setEdgeArrow(dir) { 
+        const e = cy.$(':selected'); 
+        if(e.isEdge()) { 
+            e.data('arrow', (dir==='forward'||dir==='both'?'triangle':'none')); 
+            e.data('sArrow', (dir==='backward'||dir==='both'?'triangle':'none')); 
+        } 
+    }
     function updateGroupName() { if(activeGroupId) { groups[activeGroupId].name = document.getElementById('group-name-input').value; updateUI(); drawGroups(); } }
     
-    function addPerson() { const name = prompt("Name:"); if(name) cy.add({ group:'nodes', data:{ id:'p'+Date.now(), type:'person', name, color:'#4F46E5' }, position:{ x:cy.width()/2, y:cy.height()/2 } }); }
+    function addPerson() { const name = prompt("Name:"); if(name) cy.add({ group:'nodes', data:{ id:'p'+Date.now(), type:'person', name, color:'#4F46E5', notes:'' }, position:{ x:cy.width()/2, y:cy.height()/2 } }); }
     function addGroup() { const name = prompt("Group Name:"); if(name) { const id='g'+Date.now(); groups[id] = { name, members:[], visible:true, color:palette[groupOrder.length%palette.length] }; groupOrder.push(id); updateUI(); autoSave(); } }
     function toggleConnectionMode() { connectionMode = !connectionMode; selectedNodes = []; document.getElementById('connBtn').innerText = `Link Mode: ${connectionMode?'ON':'OFF'}`; }
     function hidePanels() { document.querySelectorAll('.panel').forEach(p=>p.style.display='none'); }
@@ -245,11 +257,11 @@
     function reorderGroup(dir) { if(!activeGroupId) return; groupOrder = groupOrder.filter(id => id !== activeGroupId); if(dir === 'front') groupOrder.push(activeGroupId); else groupOrder.unshift(activeGroupId); drawGroups(); }
     function deleteGroup() { if(confirm("Delete group?")) { delete groups[activeGroupId]; groupOrder = groupOrder.filter(id => id !== activeGroupId); hidePanels(); updateUI(); drawGroups(); } }
     function runSearch() { const t = document.getElementById('search-input').value.toLowerCase(); cy.nodes().removeClass('highlighted'); if(t) { const targets = cy.nodes('[type="person"]').filter(n => n.data('name').toLowerCase().includes(t)); targets.addClass('highlighted'); if(targets.length) cy.animate({center:{eles:targets}, zoom:1}); } }
-    function clearCache() { if(confirm("Reset App? This deletes local cache (NOT your exported files).")) { localStorage.removeItem('relationMapData_v52'); location.reload(); } }
-    function saveData() { const blob = new Blob([JSON.stringify({ elements: cy.elements().map(e=>({group:e.isNode()?'nodes':'edges', data:e.data(), position:e.position()})), groups, groupOrder })], {type: "application/json"}); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = "relationmap_v52.json"; a.click(); }
+    function clearCache() { if(confirm("Reset App?")) { localStorage.removeItem('relationMapData_v53'); location.reload(); } }
+    function saveData() { const blob = new Blob([JSON.stringify({ elements: cy.elements().map(e=>({group:e.isNode()?'nodes':'edges', data:e.data(), position:e.position()})), groups, groupOrder })], {type: "application/json"}); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = "relationmap_v53.json"; a.click(); }
 
     window.onload = () => {
-        const saved = localStorage.getItem('relationMapData_v52');
+        const saved = localStorage.getItem('relationMapData_v53');
         if(saved) {
             const d = JSON.parse(saved); cy.add(d.elements); groups = d.groups; groupOrder = d.groupOrder || Object.keys(groups);
             updateUI(); drawGroups();
