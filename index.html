@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>RelationMap App</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.26.0/cytoscape.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/webcola@3.4.0/WebCola/cola.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/cytoscape-cola@2.5.1/cytoscape-cola.min.js"></script>
+    <style>
+        :root { --primary: #4F46E5; --bg: #f8fafc; }
+        * { box-sizing: border-box; margin: 0; padding: 0; touch-action: manipulation; }
+        body { display: flex; flex-direction: column; height: 100vh; font-family: -apple-system, sans-serif; background: var(--bg); overflow: hidden; }
+        
+        /* Mobile Responsive Layout */
+        #main-container { display: flex; flex-direction: row; flex-grow: 1; height: 100%; }
+        @media (max-width: 768px) {
+            #main-container { flex-direction: column; }
+            #sidebar { width: 100% !important; height: 40%; border-right: none !important; border-top: 1px solid #e2e8f0; order: 2; }
+            #cy-container { height: 60% !important; order: 1; }
+        }
+
+        #sidebar { width: 320px; background: white; border-right: 1px solid #e2e8f0; display: flex; flex-direction: column; padding: 15px; z-index: 1000; overflow-y: auto; }
+        #cy-container { flex-grow: 1; position: relative; background: white; }
+        #cy { position: absolute; width: 100%; height: 100%; z-index: 1; }
+        #overlay-canvas { position: absolute; width: 100%; height: 100%; z-index: 2; pointer-events: none; }
+
+        /* Larger Touch Targets */
+        button { width: 100%; padding: 12px; margin-bottom: 8px; border-radius: 8px; border: 1px solid #e2e8f0; cursor: pointer; font-weight: 600; font-size: 14px; background: white; }
+        .btn-main { background: var(--primary); color: white; border: none; }
+        .btn-group { background: #10B981; color: white; border: none; }
+        
+        .panel { display: none; background: #f1f5f9; padding: 15px; border-radius: 12px; margin-bottom: 10px; }
+        .member-checklist { max-height: 150px; overflow-y: auto; background: white; border: 1px solid #e2e8f0; border-radius: 8px; padding: 8px; margin: 10px 0; }
+        .check-item { display: flex; align-items: center; padding: 10px 0; border-bottom: 1px solid #f1f5f9; font-size: 14px; }
+        
+        .status-pill { position: absolute; top: 10px; left: 10px; z-index: 100; background: rgba(0,0,0,0.6); color: white; padding: 4px 10px; border-radius: 20px; font-size: 10px; pointer-events: none; }
+    </style>
+</head>
+<body>
+
+<div id="main-container">
+    <div id="sidebar">
+        <h1 style="font-size: 1.2rem; color: var(--primary); margin-bottom: 10px;">RelationMap v4.8</h1>
+        
+        <div style="display:flex; gap:5px;">
+            <button onclick="undo()" style="flex:1">Undo</button>
+            <button onclick="saveData()" style="flex:1">Export</button>
+            <button onclick="clearAll()" style="flex:1; color:red;">Clear</button>
+        </div>
+
+        <button class="btn-main" onclick="addPerson()">+ New Person</button>
+        <button class="btn-group" onclick="addGroup()">+ New Group</button>
+        <button id="connBtn" onclick="toggleConnectionMode()">Link Mode: OFF</button>
+
+        <div id="edit-panel" class="panel">
+            <input type="text" id="edit-node-name" oninput="updateNodeName()" placeholder="Name">
+            <textarea id="node-notes" oninput="updateNotes()" placeholder="Notes"></textarea>
+            <div id="group-tags-container" style="margin-top:10px;"></div>
+            <button onclick="deleteSelected()" style="margin-top:10px; color:red;">Delete</button>
+        </div>
+
+        <div id="group-edit-panel" class="panel" style="background: #ecfdf5;">
+            <input type="text" id="group-name-input" oninput="updateGroupName()" placeholder="Group Name">
+            <div id="member-checklist-container" class="member-checklist"></div>
+            <button onclick="reorderGroup('front')">Bring to Front</button>
+            <button onclick="deleteGroup()" style="color:red;">Delete Group</button>
+        </div>
+
+        <div id="visibility-list"></div>
+    </div>
+
+    <div id="cy-container">
+        <div class="status-pill" id="save-status">Auto-saved</div>
+        <div id="cy"></div>
+        <canvas id="overlay-canvas"></canvas>
+    </div>
+</div>
+
+<script>
+    let connectionMode = false, selectedNodes = [], history = [], groups = {}, activeGroupId = null, groupOrder = [];
+    const canvas = document.getElementById('overlay-canvas');
+    const ctx = canvas.getContext('2d');
+    const palette = ['#4F46E5', '#10B981', '#3B82F6', '#F59E0B', '#EF4444', '#8B5CF6'];
+
+    const cy = cytoscape({
+        container: document.getElementById('cy'),
+        style: [
+            { selector: 'node[type="person"]', style: { 'width': 65, 'height': 65, 'background-color': 'data(color)', 'label': 'data(name)', 'text-valign': 'center', 'color': '#fff', 'font-size': '12px', 'font-weight': 'bold', 'text-wrap': 'wrap', 'text-max-width': '60px' }},
+            { selector: 'edge', style: { 'width': 3, 'line-color': '#cbd5e1', 'curve-style': 'bezier', 'target-arrow-shape': 'data(arrow)', 'label': 'data(label)', 'edge-text-rotation': 'autorotate', 'font-size': '10px' }},
+            { selector: ':selected', style: { 'border-width': 4, 'border-color': '#fbbf24' }}
+        ]
+    });
+
+    // --- AUTO-SAVE LOGIC ---
+    function autoSave() {
+        const data = {
+            elements: cy.elements().map(e => ({ group: e.isNode()?'nodes':'edges', data: e.data(), position: e.position() })),
+            groups,
+            groupOrder
+        };
+        localStorage.setItem('relationMapData', JSON.stringify(data));
+        const status = document.getElementById('save-status');
+        status.innerText = "Saved " + new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+    }
+
+    function loadFromStorage() {
+        const saved = localStorage.getItem('relationMapData');
+        if (saved) {
+            const data = JSON.parse(saved);
+            cy.add(data.elements);
+            groups = data.groups || {};
+            groupOrder = data.groupOrder || Object.keys(groups);
+            updateUI();
+            drawGroups();
+        }
+    }
+
+    // Trigger autoSave on any change
+    cy.on('position dragfree add remove data', autoSave);
+
+    // --- RENDERER & UI (Simplified for Mobile) ---
+    function drawGroups() {
+        canvas.width = canvas.clientWidth; canvas.height = canvas.clientHeight;
+        ctx.clearRect(0,0,canvas.width,canvas.height);
+        const zoom = cy.zoom();
+        groupOrder.forEach(id => {
+            const g = groups[id]; if(!g || !g.visible || !g.members.length) return;
+            const nodes = g.members.map(mid => cy.getElementById(mid)).filter(n => n.length > 0);
+            if(!nodes.length) return;
+            let pts = [];
+            nodes.forEach(n => {
+                const pos = n.renderedPosition(); const r = 45 * zoom;
+                for(let i=0; i<8; i++) pts.push({ x: pos.x + r * Math.cos(i*Math.PI/4), y: pos.y + r * Math.sin(i*Math.PI/4) });
+            });
+            const hull = nodes.length > 1 ? getConvexHull(pts) : pts;
+            ctx.beginPath(); ctx.fillStyle = g.color + '22'; ctx.strokeStyle = g.color + '66';
+            ctx.moveTo(hull[0].x, hull[0].y); hull.forEach(p => ctx.lineTo(p.x, p.y));
+            ctx.closePath(); ctx.fill(); ctx.stroke();
+        });
+    }
+
+    function getConvexHull(pts) {
+        pts.sort((a,b) => a.x - b.x || a.y - b.y);
+        const cross = (a,b,c) => (b.x-a.x)*(c.y-a.y)-(b.y-a.y)*(c.x-a.x);
+        const l = []; for(let p of pts) { while(l.length>=2 && cross(l[l.length-2],l[l.length-1],p)<=0) l.pop(); l.push(p); }
+        const u = []; for(let i=pts.length-1; i>=0; i--) { while(u.length>=2 && cross(u[u.length-2],u[u.length-1],pts[i])<=0) u.pop(); u.push(pts[i]); }
+        return l.concat(u);
+    }
+
+    cy.on('render pan zoom', drawGroups);
+    
+    // UI Actions
+    function addPerson() {
+        const name = prompt("Name:"); if(!name) return;
+        cy.add({ group: 'nodes', data: { id: 'p'+Date.now(), type: 'person', name, color: '#4F46E5' }, position: { x: 100, y: 100 } });
+    }
+
+    function addGroup() {
+        const name = prompt("Group Name:"); if(!name) return;
+        const id = 'g'+Date.now();
+        groups[id] = { name, members: [], visible: true, color: palette[groupOrder.length % palette.length] };
+        groupOrder.push(id);
+        updateUI();
+        autoSave();
+    }
+
+    function toggleMember(gid, pid) {
+        if(groups[gid].members.includes(pid)) groups[gid].members = groups[gid].members.filter(m=>m!==pid);
+        else groups[gid].members.push(pid);
+        drawGroups(); autoSave();
+    }
+
+    function showGroupEdit(id) {
+        activeGroupId = id;
+        document.querySelectorAll('.panel').forEach(p=>p.style.display='none');
+        document.getElementById('group-edit-panel').style.display='block';
+        document.getElementById('group-name-input').value = groups[id].name;
+        const container = document.getElementById('member-checklist-container');
+        container.innerHTML = '';
+        cy.nodes('[type="person"]').forEach(p => {
+            const item = document.createElement('div'); item.className = 'check-item';
+            item.innerHTML = `<input type="checkbox" ${groups[id].members.includes(p.id())?'checked':''} onchange="toggleMember('${id}','${p.id()}')"> ${p.data('name')}`;
+            container.appendChild(item);
+        });
+    }
+
+    function updateUI() {
+        const list = document.getElementById('visibility-list');
+        list.innerHTML = '<div class="section-label">Groups</div>';
+        groupOrder.forEach(id => {
+            const div = document.createElement('div'); div.className = 'vis-item';
+            div.innerHTML = `<span onclick="showGroupEdit('${id}')" style="color:${groups[id].color}; font-weight:bold;">${groups[id].name}</span>`;
+            list.appendChild(div);
+        });
+    }
+
+    function clearAll() { if(confirm("Clear all data?")) { localStorage.clear(); location.reload(); } }
+
+    window.onload = loadFromStorage;
+</script>
+</body>
+</html>
