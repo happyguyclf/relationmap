@@ -2,85 +2,103 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RelationMap v5.4 (Classic + AutoSave)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>RelationMap v5.5 (Full Power + Auto-Save)</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.26.0/cytoscape.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/webcola@3.4.0/WebCola/cola.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/cytoscape-cola@2.5.1/cytoscape-cola.min.js"></script>
     <style>
         :root { --primary: #4F46E5; --bg: #f8fafc; }
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { display: flex; height: 100vh; font-family: -apple-system, sans-serif; background: var(--bg); overflow: hidden; }
+        body { display: flex; height: 100vh; font-family: -apple-system, system-ui, sans-serif; background: var(--bg); overflow: hidden; }
         
-        /* COLLAPSIBLE SIDEBAR LOGIC */
+        /* SIDEBAR & COLLAPSE LOGIC */
         #sidebar { 
-            width: 340px; background: white; border-right: 1px solid #e2e8f0; 
+            width: 350px; background: white; border-right: 1px solid #e2e8f0; 
             display: flex; flex-direction: column; padding: 20px; z-index: 1000; 
-            transition: transform 0.3s ease; position: relative;
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); position: relative;
         }
-        #sidebar.collapsed { transform: translateX(-340px); margin-right: -340px; }
-        
+        #sidebar.collapsed { transform: translateX(-350px); margin-right: -350px; }
         #toggle-tab {
             position: absolute; right: -30px; top: 50%; transform: translateY(-50%);
-            width: 30px; height: 60px; background: white; border: 1px solid #e2e8f0;
-            border-left: none; border-radius: 0 8px 8px 0; cursor: pointer;
-            display: flex; align-items: center; justify-content: center; font-size: 12px;
+            width: 30px; height: 80px; background: white; border: 1px solid #e2e8f0;
+            border-left: none; border-radius: 0 10px 10px 0; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; font-weight: bold; color: #64748b;
         }
 
         #cy-container { flex-grow: 1; position: relative; background: white; }
         #cy { position: absolute; width: 100%; height: 100%; z-index: 1; }
         #overlay-canvas { position: absolute; width: 100%; height: 100%; z-index: 2; pointer-events: none; }
 
+        /* V4.7 REPLICA STYLING */
+        h2 { font-size: 18px; margin-bottom: 15px; color: #1e293b; }
+        .section-label { font-size: 11px; font-weight: 800; color: #94a3b8; text-transform: uppercase; margin: 15px 0 5px; }
         .panel { background: #f1f5f9; padding: 15px; border-radius: 12px; margin-bottom: 15px; display: none; border: 1px solid #cbd5e1; }
-        input, textarea, select { width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; margin-top: 5px; }
-        button { width: 100%; padding: 10px; margin-bottom: 5px; border-radius: 8px; border: 1px solid #e2e8f0; cursor: pointer; font-weight: 600; }
-        .btn-main { background: var(--primary); color: white; border: none; }
         
-        .status-pill { position: absolute; bottom: 10px; left: 10px; z-index: 100; background: rgba(0,0,0,0.6); color: white; padding: 4px 10px; border-radius: 20px; font-size: 10px; }
+        input, textarea, select { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; margin-top: 5px; font-size: 13px; }
+        button { width: 100%; padding: 10px; margin-bottom: 6px; border-radius: 8px; border: 1px solid #e2e8f0; cursor: pointer; font-weight: 600; font-size: 13px; background: white; transition: 0.2s; }
+        button:hover { background: #f8fafc; }
+        .btn-main { background: var(--primary); color: white; border: none; }
+        .btn-group { background: #10B981; color: white; border: none; }
+        
+        /* COLOR PICKER (V4.7 Style) */
+        .color-row { display: flex; gap: 8px; margin-top: 8px; overflow-x: auto; padding-bottom: 5px; }
+        .color-dot { min-width: 25px; height: 25px; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 0 1px #cbd5e1; cursor: pointer; }
+        .color-dot.active { box-shadow: 0 0 0 2px var(--primary); transform: scale(1.1); }
+
+        .status-pill { position: absolute; bottom: 15px; left: 15px; z-index: 100; background: rgba(15, 23, 42, 0.8); color: white; padding: 5px 12px; border-radius: 20px; font-size: 11px; backdrop-filter: blur(4px); }
     </style>
 </head>
 <body>
 
 <div id="sidebar">
-    <div id="toggle-tab" onclick="document.getElementById('sidebar').classList.toggle('collapsed')">◀▶</div>
+    <div id="toggle-tab" onclick="document.getElementById('sidebar').classList.toggle('collapsed')">◀</div>
     
-    <h3 style="margin-bottom:15px;">RelationMap v5.4</h3>
+    <h2>RelationMap v5.5</h2>
+    
+    <input type="text" id="search-input" placeholder="🔍 Find someone..." oninput="runSearch()" style="margin-bottom: 10px;">
+    
     <button class="btn-main" onclick="addPerson()">+ Add Person</button>
-    <button onclick="addGroup()">+ Add Group</button>
-    <button id="connBtn" onclick="toggleConnectionMode()">Link Mode: OFF</button>
+    <button class="btn-group" onclick="addGroup()">+ Add Group (Selected)</button>
+    <button id="connBtn" onclick="toggleConnectionMode()">🔗 Link Mode: OFF</button>
     
-    <hr style="margin: 15px 0; border: 0; border-top: 1px solid #eee;">
-
     <div id="edit-panel" class="panel">
-        <label>Name:</label>
-        <input type="text" id="edit-node-name" oninput="updateNodeName()">
-        <label>Notes:</label>
-        <textarea id="node-notes" oninput="updateNotes()"></textarea>
-        <button onclick="deleteSelected()" style="color:red; margin-top:10px;">Delete</button>
+        <div class="section-label">Edit Person</div>
+        <input type="text" id="edit-node-name" oninput="updateNodeName()" placeholder="Name">
+        <textarea id="node-notes" oninput="updateNotes()" placeholder="Notes / Sub-label"></textarea>
+        <div class="color-row" id="node-color-picker"></div>
+        <button onclick="deleteSelected()" style="color:#ef4444; border:none; margin-top:10px;">Delete Person</button>
     </div>
 
-    <div id="edge-panel" class="panel">
-        <label>Relation:</label>
-        <input type="text" id="edge-label-input" oninput="updateEdgeLabel()">
-        <label>Style:</label>
-        <select id="edge-style" onchange="updateEdgeStyle()">
-            <option value="solid">Solid</option>
-            <option value="dashed">Dashed</option>
-            <option value="dotted">Dotted</option>
+    <div id="edge-panel" class="panel" style="background: #fff7ed;">
+        <div class="section-label">Edit Link</div>
+        <input type="text" id="edge-label-input" oninput="updateEdgeLabel()" placeholder="Label">
+        <select id="edge-style-select" onchange="updateEdgeStyle()">
+            <option value="solid">Solid Line</option>
+            <option value="dashed">Dashed Line</option>
+            <option value="dotted">Dotted Line</option>
         </select>
-        <button onclick="deleteSelected()" style="color:red; margin-top:10px;">Delete Link</button>
+        <div class="section-label">Arrows</div>
+        <div style="display:flex; gap:4px;">
+            <button onclick="setArrows('none')" style="flex:1">--</button>
+            <button onclick="setArrows('forward')" style="flex:1">→</button>
+            <button onclick="setArrows('backward')" style="flex:1">←</button>
+            <button onclick="setArrows('both')" style="flex:1">↔</button>
+        </div>
+        <button onclick="deleteSelected()" style="color:#ef4444; border:none; margin-top:10px;">Delete Link</button>
     </div>
 
-    <div id="visibility-list"></div>
+    <div class="section-label">Active Groups</div>
+    <div id="visibility-list" style="flex-grow:1; overflow-y:auto; margin-bottom:10px;"></div>
     
-    <div style="margin-top:auto;">
-        <button onclick="saveData()">Export JSON</button>
-        <button onclick="cy.fit(null, 50)">Center View</button>
+    <div style="border-top: 1px solid #eee; padding-top: 10px;">
+        <button onclick="saveData()">💾 Export JSON</button>
+        <button onclick="cy.fit(null, 50)">🎯 Center All</button>
     </div>
 </div>
 
 <div id="cy-container">
-    <div class="status-pill" id="save-status">Auto-Save Active</div>
+    <div class="status-pill" id="save-status">Cloud Sync Ready</div>
     <div id="cy"></div>
     <canvas id="overlay-canvas"></canvas>
 </div>
@@ -89,30 +107,37 @@
     let connectionMode = false, selectedNodes = [], groups = {}, groupOrder = [];
     const canvas = document.getElementById('overlay-canvas');
     const ctx = canvas.getContext('2d');
+    const palette = ['#4F46E5', '#10B981', '#3B82F6', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899'];
 
     const cy = cytoscape({
         container: document.getElementById('cy'),
         style: [
-            { selector: 'node', style: { 'width': 60, 'height': 60, 'background-color': '#4F46E5', 'label': 'data(name)', 'text-valign': 'center', 'color': '#fff', 'font-size': '12px', 'text-wrap': 'wrap', 'text-max-width': '50px' }},
+            { selector: 'node', style: { 
+                'width': 65, 'height': 65, 'background-color': 'data(color)', 'label': 'data(name)', 
+                'text-valign': 'center', 'color': '#fff', 'font-size': '12px', 'font-weight': 'bold',
+                'text-wrap': 'wrap', 'text-max-width': '60px', 'text-outline-width': 1.5, 'text-outline-color': '#000' 
+            }},
             { selector: 'node[notes]', style: { 'label': 'data(name)\n(data(notes))' }},
-            { selector: 'edge', style: { 'width': 3, 'line-color': '#cbd5e1', 'curve-style': 'bezier', 'target-arrow-shape': 'triangle', 'label': 'data(label)', 'line-style': 'data(lineStyle)' }},
-            { selector: ':selected', style: { 'border-width': 4, 'border-color': '#fbbf24' }}
+            { selector: 'edge', style: { 
+                'width': 3, 'line-color': '#94a3b8', 'curve-style': 'bezier', 
+                'target-arrow-shape': 'data(arrow)', 'source-arrow-shape': 'data(sArrow)', 
+                'line-style': 'data(lineStyle)', 'label': 'data(label)', 
+                'edge-text-rotation': 'autorotate', 'font-size': '10px', 'text-background-opacity': 1, 'text-background-color': '#fff' 
+            }},
+            { selector: ':selected', style: { 'border-width': 6, 'border-color': '#fbbf24' }},
+            { selector: '.highlighted', style: { 'border-width': 10, 'border-color': '#4F46E5' }}
         ]
     });
 
-    // --- THE AUTO-SAVE ENGINE ---
+    // --- AUTO-SAVE ---
     function autoSave() {
-        const data = { 
-            elements: cy.elements().map(e => ({ group: e.isNode()?'nodes':'edges', data: e.data(), position: e.position() })), 
-            groups, 
-            groupOrder 
-        };
-        localStorage.setItem('relationMapClassic_v54', JSON.stringify(data));
-        document.getElementById('save-status').innerText = "✓ Saved " + new Date().toLocaleTimeString();
+        const data = { elements: cy.elements().map(e => ({ group: e.isNode()?'nodes':'edges', data: e.data(), position: e.position() })), groups, groupOrder };
+        localStorage.setItem('relationMapFull_v55', JSON.stringify(data));
+        document.getElementById('save-status').innerText = "✓ Saved: " + new Date().toLocaleTimeString();
     }
-    // Watch for moves, adds, deletes, or data changes
     cy.on('position dragfree add remove data', autoSave);
 
+    // --- CONVEX HULL (V4.7 Bubbles) ---
     function drawGroups() {
         canvas.width = canvas.clientWidth; canvas.height = canvas.clientHeight;
         ctx.clearRect(0,0,canvas.width,canvas.height);
@@ -123,14 +148,15 @@
             if(!nodes.length) return;
             let pts = [];
             nodes.forEach(n => {
-                const pos = n.renderedPosition(); const r = 40 * zoom;
+                const pos = n.renderedPosition(); const r = 45 * zoom;
                 for(let i=0; i<8; i++) pts.push({ x: pos.x + r * Math.cos(i*Math.PI/4), y: pos.y + r * Math.sin(i*Math.PI/4) });
             });
             const hull = getConvexHull(pts);
-            ctx.beginPath(); ctx.fillStyle = g.color + '22'; ctx.strokeStyle = g.color + '66';
+            ctx.beginPath(); ctx.fillStyle = g.color + '22'; ctx.strokeStyle = g.color + '66'; ctx.lineWidth = 2;
             ctx.moveTo(hull[0].x, hull[0].y); hull.forEach(p => ctx.lineTo(p.x, p.y));
             ctx.closePath(); ctx.fill(); ctx.stroke();
-            ctx.fillStyle = g.color; ctx.fillText(g.name.toUpperCase(), pts[0].x, pts[0].y - 40);
+            ctx.fillStyle = g.color; ctx.font = "bold 12px sans-serif";
+            ctx.fillText(g.name.toUpperCase(), hull[0].x, hull[0].y - 10);
         });
     }
 
@@ -143,67 +169,104 @@
     }
     cy.on('render pan zoom', drawGroups);
 
-    // --- CLASSIC LOGIC ---
+    // --- CORE ACTIONS ---
     function addPerson() {
         const name = prompt("Name:");
-        if(name) cy.add({ group:'nodes', data:{ id:'p'+Date.now(), name, notes:'', type:'person' }, position:{ x:100, y:100 } });
+        if(name) cy.add({ group:'nodes', data:{ id:'p'+Date.now(), name, notes:'', type:'person', color:'#4F46E5' }, position:{ x:cy.width()/2, y:cy.height()/2 } });
     }
+
     function addGroup() {
         const name = prompt("Group Name:");
         if(name) {
             const id = 'g'+Date.now();
-            const selected = cy.$(':selected').filter('node').map(n => n.id());
-            groups[id] = { name, members: selected, visible: true, color: '#4F46E5' };
+            const members = cy.$(':selected').filter('node').map(n => n.id());
+            groups[id] = { name, members, visible: true, color: palette[groupOrder.length % palette.length] };
             groupOrder.push(id); updateUI(); autoSave();
         }
     }
-    function toggleConnectionMode() { connectionMode = !connectionMode; selectedNodes = []; document.getElementById('connBtn').innerText = `Link Mode: ${connectionMode?'ON':'OFF'}`; }
-    
+
+    function toggleConnectionMode() { 
+        connectionMode = !connectionMode; 
+        selectedNodes = []; 
+        document.getElementById('connBtn').innerText = `🔗 Link Mode: ${connectionMode?'ON':'OFF'}`;
+        document.getElementById('connBtn').style.background = connectionMode ? '#fbbf24' : '';
+    }
+
     cy.on('tap', (e) => {
-        if(e.target === cy) { document.querySelectorAll('.panel').forEach(p=>p.style.display='none'); return; }
+        if(e.target === cy) { hidePanels(); return; }
         const ele = e.target;
         if(ele.isNode() && connectionMode) {
             selectedNodes.push(ele.id());
             if(selectedNodes.length === 2) {
-                cy.add({ group:'edges', data:{ source:selectedNodes[0], target:selectedNodes[1], lineStyle:'solid', label:'' } });
+                cy.add({ group:'edges', data:{ source:selectedNodes[0], target:selectedNodes[1], arrow:'triangle', sArrow:'none', lineStyle:'solid', label:'' } });
                 toggleConnectionMode();
             }
-        } else if(ele.isNode()) {
-            document.getElementById('edit-panel').style.display = 'block';
-            document.getElementById('edit-node-name').value = ele.data('name');
-            document.getElementById('node-notes').value = ele.data('notes') || '';
-        } else if(ele.isEdge()) {
-            document.getElementById('edge-panel').style.display = 'block';
-            document.getElementById('edge-label-input').value = ele.data('label') || '';
-        }
+        } else if(ele.isNode()) { showPersonEdit(ele); }
+        else if(ele.isEdge()) { showEdgeEdit(ele); }
     });
 
+    function showPersonEdit(node) {
+        hidePanels(); document.getElementById('edit-panel').style.display='block';
+        document.getElementById('edit-node-name').value = node.data('name');
+        document.getElementById('node-notes').value = node.data('notes') || '';
+        const picker = document.getElementById('node-color-picker'); picker.innerHTML = '';
+        palette.forEach(c => {
+            const d = document.createElement('div'); d.className = `color-dot ${node.data('color')===c?'active':''}`;
+            d.style.backgroundColor = c; d.onclick = () => { node.data('color', c); showPersonEdit(node); };
+            picker.appendChild(d);
+        });
+    }
+
+    function showEdgeEdit(edge) {
+        hidePanels(); document.getElementById('edge-panel').style.display='block';
+        document.getElementById('edge-label-input').value = edge.data('label') || '';
+        document.getElementById('edge-style-select').value = edge.data('lineStyle') || 'solid';
+    }
+
+    function hidePanels() { document.querySelectorAll('.panel').forEach(p=>p.style.display='none'); }
     function updateNodeName() { const n = cy.$(':selected')[0]; if(n) n.data('name', document.getElementById('edit-node-name').value); }
     function updateNotes() { const n = cy.$(':selected')[0]; if(n) n.data('notes', document.getElementById('node-notes').value); }
     function updateEdgeLabel() { const e = cy.$(':selected')[0]; if(e) e.data('label', document.getElementById('edge-label-input').value); }
-    function updateEdgeStyle() { const e = cy.$(':selected')[0]; if(e) e.data('lineStyle', document.getElementById('edge-style').value); }
-    function deleteSelected() { cy.$(':selected').remove(); }
-    
+    function updateEdgeStyle() { const e = cy.$(':selected')[0]; if(e) e.data('lineStyle', document.getElementById('edge-style-select').value); }
+    function setArrows(dir) {
+        const e = cy.$(':selected')[0]; if(!e || !e.isEdge()) return;
+        e.data('arrow', (dir==='forward'||dir==='both'?'triangle':'none'));
+        e.data('sArrow', (dir==='backward'||dir==='both'?'triangle':'none'));
+    }
+    function deleteSelected() { cy.$(':selected').remove(); hidePanels(); }
+
     function updateUI() {
-        const list = document.getElementById('visibility-list'); list.innerHTML = '<h4>Groups</h4>';
+        const list = document.getElementById('visibility-list'); list.innerHTML = '';
         groupOrder.forEach(id => {
-            const div = document.createElement('div');
-            div.innerHTML = `<button onclick="groups['${id}'].visible = !groups['${id}'].visible; drawGroups();" style="font-size:10px;">${groups[id].name} (Toggle)</button>`;
+            const div = document.createElement('div'); div.style.cssText = "display:flex; justify-content:space-between; margin-bottom:5px; align-items:center;";
+            div.innerHTML = `<span style="color:${groups[id].color}; font-weight:bold; font-size:12px;">${groups[id].name}</span>
+                             <button onclick="toggleGroupVis('${id}')" style="width:auto; margin:0; padding:2px 8px; font-size:10px;">${groups[id].visible?'Hide':'Show'}</button>`;
             list.appendChild(div);
         });
+    }
+    function toggleGroupVis(id) { groups[id].visible = !groups[id].visible; updateUI(); drawGroups(); }
+
+    function runSearch() {
+        const t = document.getElementById('search-input').value.toLowerCase();
+        cy.nodes().removeClass('highlighted');
+        if(t) {
+            const targets = cy.nodes().filter(n => n.data('name').toLowerCase().includes(t));
+            targets.addClass('highlighted');
+            if(targets.length) cy.animate({ center: { eles: targets }, zoom: 1.2 });
+        }
     }
 
     function saveData() {
         const data = JSON.stringify({ elements: cy.elements().map(e=>({group:e.isNode()?'nodes':'edges', data:e.data(), position:e.position()})), groups, groupOrder });
         const blob = new Blob([data], {type: "application/json"});
-        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = "map_classic.json"; a.click();
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = "relationmap_full.json"; a.click();
     }
 
     window.onload = () => {
-        const saved = localStorage.getItem('relationMapClassic_v54');
+        const saved = localStorage.getItem('relationMapFull_v55');
         if(saved) {
             const d = JSON.parse(saved); cy.add(d.elements); groups = d.groups; groupOrder = d.groupOrder;
-            updateUI(); drawGroups();
+            updateUI(); drawGroups(); cy.fit(null, 50);
         }
     };
 </script>
