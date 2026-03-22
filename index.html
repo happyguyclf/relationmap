@@ -2,149 +2,115 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <title>RelationMap v5.3</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RelationMap v5.4 (Classic + AutoSave)</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.26.0/cytoscape.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/webcola@3.4.0/WebCola/cola.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/cytoscape-cola@2.5.1/cytoscape-cola.min.js"></script>
     <style>
         :root { --primary: #4F46E5; --bg: #f8fafc; }
-        * { box-sizing: border-box; margin: 0; padding: 0; touch-action: manipulation; }
-        body { display: flex; flex-direction: column; height: 100vh; font-family: -apple-system, sans-serif; background: var(--bg); overflow: hidden; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { display: flex; height: 100vh; font-family: -apple-system, sans-serif; background: var(--bg); overflow: hidden; }
         
-        #main-container { display: flex; flex-direction: row; flex-grow: 1; height: 100%; }
-        @media (max-width: 768px) {
-            #main-container { flex-direction: column; }
-            #sidebar { width: 100% !important; height: 45%; border-top: 1px solid #e2e8f0; order: 2; }
-            #cy-container { height: 55% !important; order: 1; }
+        /* COLLAPSIBLE SIDEBAR LOGIC */
+        #sidebar { 
+            width: 340px; background: white; border-right: 1px solid #e2e8f0; 
+            display: flex; flex-direction: column; padding: 20px; z-index: 1000; 
+            transition: transform 0.3s ease; position: relative;
+        }
+        #sidebar.collapsed { transform: translateX(-340px); margin-right: -340px; }
+        
+        #toggle-tab {
+            position: absolute; right: -30px; top: 50%; transform: translateY(-50%);
+            width: 30px; height: 60px; background: white; border: 1px solid #e2e8f0;
+            border-left: none; border-radius: 0 8px 8px 0; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; font-size: 12px;
         }
 
-        #sidebar { width: 340px; background: white; border-right: 1px solid #e2e8f0; display: flex; flex-direction: column; padding: 15px; z-index: 1000; overflow-y: auto; }
         #cy-container { flex-grow: 1; position: relative; background: white; }
         #cy { position: absolute; width: 100%; height: 100%; z-index: 1; }
         #overlay-canvas { position: absolute; width: 100%; height: 100%; z-index: 2; pointer-events: none; }
 
-        input, textarea, select { width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 13px; margin-top: 5px; outline: none; background: white; }
-        button { width: 100%; padding: 10px; margin-bottom: 6px; border-radius: 8px; border: 1px solid #e2e8f0; cursor: pointer; font-weight: 600; font-size: 12px; background: white; }
+        .panel { background: #f1f5f9; padding: 15px; border-radius: 12px; margin-bottom: 15px; display: none; border: 1px solid #cbd5e1; }
+        input, textarea, select { width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; margin-top: 5px; }
+        button { width: 100%; padding: 10px; margin-bottom: 5px; border-radius: 8px; border: 1px solid #e2e8f0; cursor: pointer; font-weight: 600; }
         .btn-main { background: var(--primary); color: white; border: none; }
-        .btn-group { background: #10B981; color: white; border: none; }
         
-        .panel { display: none; background: #f1f5f9; padding: 12px; border-radius: 10px; margin-bottom: 10px; border: 1px solid #cbd5e1; }
-        .section-label { font-size: 10px; font-weight: 800; color: #94a3b8; text-transform: uppercase; margin: 10px 0 5px; }
-        
-        .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4px; }
-        .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; }
-
-        .member-checklist { max-height: 100px; overflow-y: auto; background: white; border: 1px solid #e2e8f0; border-radius: 8px; padding: 8px; margin: 5px 0; }
-        .check-item { display: flex; align-items: center; padding: 6px 0; border-bottom: 1px solid #f1f5f9; font-size: 13px; }
-        
-        .status-pill { position: absolute; top: 10px; left: 10px; z-index: 100; background: rgba(0,0,0,0.7); color: white; padding: 4px 12px; border-radius: 20px; font-size: 10px; }
-        .back-link { color: var(--primary); font-size: 12px; cursor: pointer; display: block; margin-bottom: 8px; font-weight: bold; }
+        .status-pill { position: absolute; bottom: 10px; left: 10px; z-index: 100; background: rgba(0,0,0,0.6); color: white; padding: 4px 10px; border-radius: 20px; font-size: 10px; }
     </style>
 </head>
 <body>
 
-<div id="main-container">
-    <div id="sidebar">
-        <input type="text" id="search-input" placeholder="🔍 Search Map..." oninput="runSearch()">
-        
-        <div style="display:flex; gap:4px; margin-top: 10px;">
-            <button onclick="saveData()" style="flex:1">Export</button>
-            <button onclick="clearCache()" style="flex:1; color:red;">Reset</button>
-        </div>
+<div id="sidebar">
+    <div id="toggle-tab" onclick="document.getElementById('sidebar').classList.toggle('collapsed')">◀▶</div>
+    
+    <h3 style="margin-bottom:15px;">RelationMap v5.4</h3>
+    <button class="btn-main" onclick="addPerson()">+ Add Person</button>
+    <button onclick="addGroup()">+ Add Group</button>
+    <button id="connBtn" onclick="toggleConnectionMode()">Link Mode: OFF</button>
+    
+    <hr style="margin: 15px 0; border: 0; border-top: 1px solid #eee;">
 
-        <button class="btn-main" onclick="addPerson()">+ Add Person</button>
-        <button class="btn-group" onclick="addGroup()">+ Add Group</button>
-        <button id="connBtn" onclick="toggleConnectionMode()">Link Mode: OFF</button>
-
-        <div id="edit-panel" class="panel">
-            <span class="back-link" onclick="hidePanels()">← Back</span>
-            <input type="text" id="edit-node-name" oninput="updateNodeName()" placeholder="Name">
-            <textarea id="node-notes" oninput="updateNotes()" placeholder="Notes (shown on map)..."></textarea>
-            
-            <div class="section-label">Member of Groups</div>
-            <div id="person-group-tags" class="member-checklist"></div>
-            
-            <button onclick="deleteSelected()" style="color:#ef4444; border:none; margin-top:10px;">Delete Person</button>
-        </div>
-
-        <div id="edge-panel" class="panel" style="background:#fff7ed;">
-            <span class="back-link" onclick="hidePanels()">← Back</span>
-            <input type="text" id="edge-label-input" oninput="updateEdgeLabel()" placeholder="Label">
-            
-            <div class="section-label">Style</div>
-            <div class="grid-3">
-                <button onclick="setEdgeStyle('solid')">Solid</button>
-                <button onclick="setEdgeStyle('dashed')">Dash</button>
-                <button onclick="setEdgeStyle('dotted')">Dot</button>
-            </div>
-            
-            <div class="section-label">Arrows</div>
-            <div class="grid-4">
-                <button onclick="setEdgeArrow('none')">--</button>
-                <button onclick="setEdgeArrow('forward')">→</button>
-                <button onclick="setEdgeArrow('backward')">←</button>
-                <button onclick="setEdgeArrow('both')">↔</button>
-            </div>
-            
-            <button onclick="deleteSelected()" style="color:#ef4444; border:none; margin-top:10px;">Delete Link</button>
-        </div>
-
-        <div id="group-edit-panel" class="panel" style="background:#f0fdf4;">
-            <span class="back-link" onclick="hidePanels()">← Back</span>
-            <input type="text" id="group-name-input" oninput="updateGroupName()" placeholder="Group Name">
-            <div class="section-label">Members</div>
-            <div id="member-checklist-container" class="member-checklist"></div>
-            <button onclick="reorderGroup('front')">Bring to Front</button>
-            <button onclick="deleteGroup()" style="color:#ef4444; border:none;">Delete Group</button>
-        </div>
-
-        <div id="visibility-list"></div>
+    <div id="edit-panel" class="panel">
+        <label>Name:</label>
+        <input type="text" id="edit-node-name" oninput="updateNodeName()">
+        <label>Notes:</label>
+        <textarea id="node-notes" oninput="updateNotes()"></textarea>
+        <button onclick="deleteSelected()" style="color:red; margin-top:10px;">Delete</button>
     </div>
 
-    <div id="cy-container">
-        <div class="status-pill" id="save-status">V5.3 Online</div>
-        <div id="cy"></div>
-        <canvas id="overlay-canvas"></canvas>
+    <div id="edge-panel" class="panel">
+        <label>Relation:</label>
+        <input type="text" id="edge-label-input" oninput="updateEdgeLabel()">
+        <label>Style:</label>
+        <select id="edge-style" onchange="updateEdgeStyle()">
+            <option value="solid">Solid</option>
+            <option value="dashed">Dashed</option>
+            <option value="dotted">Dotted</option>
+        </select>
+        <button onclick="deleteSelected()" style="color:red; margin-top:10px;">Delete Link</button>
+    </div>
+
+    <div id="visibility-list"></div>
+    
+    <div style="margin-top:auto;">
+        <button onclick="saveData()">Export JSON</button>
+        <button onclick="cy.fit(null, 50)">Center View</button>
     </div>
 </div>
 
+<div id="cy-container">
+    <div class="status-pill" id="save-status">Auto-Save Active</div>
+    <div id="cy"></div>
+    <canvas id="overlay-canvas"></canvas>
+</div>
+
 <script>
-    let connectionMode = false, selectedNodes = [], groups = {}, activeGroupId = null, groupOrder = [];
+    let connectionMode = false, selectedNodes = [], groups = {}, groupOrder = [];
     const canvas = document.getElementById('overlay-canvas');
     const ctx = canvas.getContext('2d');
-    const palette = ['#4F46E5', '#10B981', '#3B82F6', '#F59E0B', '#EF4444', '#8B5CF6'];
 
     const cy = cytoscape({
         container: document.getElementById('cy'),
         style: [
-            { selector: 'node[type="person"]', style: { 
-                'width': 65, 'height': 65, 'background-color': '#4F46E5', 
-                'label': 'data(name)', 'text-valign': 'center', 'color': '#fff', 
-                'font-size': '12px', 'font-weight': 'bold', 'text-wrap': 'wrap', 'text-max-width': '60px',
-                'text-outline-width': 1.5, 'text-outline-color': '#000' 
-            }},
-            { selector: 'node[type="person"][notes]', style: {
-                'label': 'data(name)\n(data(notes))', // Restored sub-label
-                'text-wrap': 'wrap'
-            }},
-            { selector: 'edge', style: { 
-                'width': 3, 'line-color': '#94a3b8', 'curve-style': 'bezier', 
-                'target-arrow-shape': 'data(arrow)', 'source-arrow-shape': 'data(sArrow)', 
-                'line-style': 'data(lineStyle)', 'label': 'data(label)', 
-                'edge-text-rotation': 'autorotate', 'font-size': '10px', 
-                'text-background-opacity': 1, 'text-background-color': '#fff' 
-            }},
-            { selector: ':selected', style: { 'border-width': 6, 'border-color': '#fbbf24' }}
+            { selector: 'node', style: { 'width': 60, 'height': 60, 'background-color': '#4F46E5', 'label': 'data(name)', 'text-valign': 'center', 'color': '#fff', 'font-size': '12px', 'text-wrap': 'wrap', 'text-max-width': '50px' }},
+            { selector: 'node[notes]', style: { 'label': 'data(name)\n(data(notes))' }},
+            { selector: 'edge', style: { 'width': 3, 'line-color': '#cbd5e1', 'curve-style': 'bezier', 'target-arrow-shape': 'triangle', 'label': 'data(label)', 'line-style': 'data(lineStyle)' }},
+            { selector: ':selected', style: { 'border-width': 4, 'border-color': '#fbbf24' }}
         ]
     });
 
+    // --- THE AUTO-SAVE ENGINE ---
     function autoSave() {
-        const data = { elements: cy.elements().map(e => ({ group: e.isNode()?'nodes':'edges', data: e.data(), position: e.position() })), groups, groupOrder };
-        localStorage.setItem('relationMapData_v53', JSON.stringify(data));
-        document.getElementById('save-status').innerText = "✓ Synced " + new Date().toLocaleTimeString();
+        const data = { 
+            elements: cy.elements().map(e => ({ group: e.isNode()?'nodes':'edges', data: e.data(), position: e.position() })), 
+            groups, 
+            groupOrder 
+        };
+        localStorage.setItem('relationMapClassic_v54', JSON.stringify(data));
+        document.getElementById('save-status').innerText = "✓ Saved " + new Date().toLocaleTimeString();
     }
+    // Watch for moves, adds, deletes, or data changes
     cy.on('position dragfree add remove data', autoSave);
 
     function drawGroups() {
@@ -155,18 +121,16 @@
             const g = groups[id]; if(!g || !g.visible || !g.members.length) return;
             const nodes = g.members.map(mid => cy.getElementById(mid)).filter(n => n.length > 0);
             if(!nodes.length) return;
-            let pts = [], minX = Infinity, minY = Infinity;
+            let pts = [];
             nodes.forEach(n => {
-                const pos = n.renderedPosition(); const r = 45 * zoom;
-                if(pos.x < minX) minX = pos.x; if(pos.y < minY) minY = pos.y;
+                const pos = n.renderedPosition(); const r = 40 * zoom;
                 for(let i=0; i<8; i++) pts.push({ x: pos.x + r * Math.cos(i*Math.PI/4), y: pos.y + r * Math.sin(i*Math.PI/4) });
             });
-            const hull = nodes.length > 1 ? getConvexHull(pts) : pts;
+            const hull = getConvexHull(pts);
             ctx.beginPath(); ctx.fillStyle = g.color + '22'; ctx.strokeStyle = g.color + '66';
             ctx.moveTo(hull[0].x, hull[0].y); hull.forEach(p => ctx.lineTo(p.x, p.y));
             ctx.closePath(); ctx.fill(); ctx.stroke();
-            ctx.fillStyle = g.color; ctx.font = `bold ${Math.max(12, 14*zoom)}px sans-serif`;
-            ctx.fillText(g.name.toUpperCase(), minX - (20*zoom), minY - (50*zoom));
+            ctx.fillStyle = g.color; ctx.fillText(g.name.toUpperCase(), pts[0].x, pts[0].y - 40);
         });
     }
 
@@ -179,91 +143,66 @@
     }
     cy.on('render pan zoom', drawGroups);
 
+    // --- CLASSIC LOGIC ---
+    function addPerson() {
+        const name = prompt("Name:");
+        if(name) cy.add({ group:'nodes', data:{ id:'p'+Date.now(), name, notes:'', type:'person' }, position:{ x:100, y:100 } });
+    }
+    function addGroup() {
+        const name = prompt("Group Name:");
+        if(name) {
+            const id = 'g'+Date.now();
+            const selected = cy.$(':selected').filter('node').map(n => n.id());
+            groups[id] = { name, members: selected, visible: true, color: '#4F46E5' };
+            groupOrder.push(id); updateUI(); autoSave();
+        }
+    }
+    function toggleConnectionMode() { connectionMode = !connectionMode; selectedNodes = []; document.getElementById('connBtn').innerText = `Link Mode: ${connectionMode?'ON':'OFF'}`; }
+    
     cy.on('tap', (e) => {
-        if(e.target === cy) { hidePanels(); return; }
+        if(e.target === cy) { document.querySelectorAll('.panel').forEach(p=>p.style.display='none'); return; }
         const ele = e.target;
-        if(ele.isEdge()) { showEdgeEdit(ele); return; }
-        if(ele.data('type') === 'person') {
-            if(connectionMode) {
-                selectedNodes.push(ele.id());
-                if(selectedNodes.length === 2) { 
-                    cy.add({group:'edges', data:{source:selectedNodes[0], target:selectedNodes[1], arrow:'triangle', sArrow:'none', lineStyle:'solid', label:''}}); 
-                    toggleConnectionMode(); 
-                }
-            } else { showPersonEdit(ele); }
+        if(ele.isNode() && connectionMode) {
+            selectedNodes.push(ele.id());
+            if(selectedNodes.length === 2) {
+                cy.add({ group:'edges', data:{ source:selectedNodes[0], target:selectedNodes[1], lineStyle:'solid', label:'' } });
+                toggleConnectionMode();
+            }
+        } else if(ele.isNode()) {
+            document.getElementById('edit-panel').style.display = 'block';
+            document.getElementById('edit-node-name').value = ele.data('name');
+            document.getElementById('node-notes').value = ele.data('notes') || '';
+        } else if(ele.isEdge()) {
+            document.getElementById('edge-panel').style.display = 'block';
+            document.getElementById('edge-label-input').value = ele.data('label') || '';
         }
     });
 
-    function showPersonEdit(node) {
-        hidePanels(); document.getElementById('edit-panel').style.display='block';
-        document.getElementById('edit-node-name').value = node.data('name');
-        document.getElementById('node-notes').value = node.data('notes')||'';
-        const tags = document.getElementById('person-group-tags'); tags.innerHTML = '';
-        groupOrder.forEach(gid => {
-            const item = document.createElement('div'); item.className = 'check-item';
-            item.innerHTML = `<input type="checkbox" ${groups[gid].members.includes(node.id())?'checked':''} onchange="toggleMember('${gid}','${node.id()}')"> ${groups[gid].name}`;
-            tags.appendChild(item);
-        });
-    }
-
-    function showEdgeEdit(edge) {
-        hidePanels(); document.getElementById('edge-panel').style.display='block';
-        document.getElementById('edge-label-input').value = edge.data('label')||'';
-    }
-
-    function showGroupEdit(id) {
-        activeGroupId = id; hidePanels(); document.getElementById('group-edit-panel').style.display='block';
-        document.getElementById('group-name-input').value = groups[id].name;
-        const container = document.getElementById('member-checklist-container'); container.innerHTML = '';
-        cy.nodes('[type="person"]').forEach(p => {
-            const item = document.createElement('div'); item.className = 'check-item';
-            item.innerHTML = `<input type="checkbox" ${groups[id].members.includes(p.id())?'checked':''} onchange="toggleMember('${id}','${p.id()}')"> ${p.data('name')}`;
-            container.appendChild(item);
-        });
-    }
-
-    function toggleMember(gid, pid) {
-        if(groups[gid].members.includes(pid)) groups[gid].members = groups[gid].members.filter(m=>m!==pid);
-        else groups[gid].members.push(pid);
-        drawGroups(); autoSave();
-    }
     function updateNodeName() { const n = cy.$(':selected')[0]; if(n) n.data('name', document.getElementById('edit-node-name').value); }
     function updateNotes() { const n = cy.$(':selected')[0]; if(n) n.data('notes', document.getElementById('node-notes').value); }
-    function updateEdgeLabel() { const e = cy.$(':selected')[0]; if(e && e.isEdge()) e.data('label', document.getElementById('edge-label-input').value); }
-    function setEdgeStyle(s) { const e = cy.$(':selected'); if(e.isEdge()) e.data('lineStyle', s); }
-    function setEdgeArrow(dir) { 
-        const e = cy.$(':selected'); 
-        if(e.isEdge()) { 
-            e.data('arrow', (dir==='forward'||dir==='both'?'triangle':'none')); 
-            e.data('sArrow', (dir==='backward'||dir==='both'?'triangle':'none')); 
-        } 
-    }
-    function updateGroupName() { if(activeGroupId) { groups[activeGroupId].name = document.getElementById('group-name-input').value; updateUI(); drawGroups(); } }
+    function updateEdgeLabel() { const e = cy.$(':selected')[0]; if(e) e.data('label', document.getElementById('edge-label-input').value); }
+    function updateEdgeStyle() { const e = cy.$(':selected')[0]; if(e) e.data('lineStyle', document.getElementById('edge-style').value); }
+    function deleteSelected() { cy.$(':selected').remove(); }
     
-    function addPerson() { const name = prompt("Name:"); if(name) cy.add({ group:'nodes', data:{ id:'p'+Date.now(), type:'person', name, color:'#4F46E5', notes:'' }, position:{ x:cy.width()/2, y:cy.height()/2 } }); }
-    function addGroup() { const name = prompt("Group Name:"); if(name) { const id='g'+Date.now(); groups[id] = { name, members:[], visible:true, color:palette[groupOrder.length%palette.length] }; groupOrder.push(id); updateUI(); autoSave(); } }
-    function toggleConnectionMode() { connectionMode = !connectionMode; selectedNodes = []; document.getElementById('connBtn').innerText = `Link Mode: ${connectionMode?'ON':'OFF'}`; }
-    function hidePanels() { document.querySelectorAll('.panel').forEach(p=>p.style.display='none'); }
     function updateUI() {
-        const list = document.getElementById('visibility-list'); list.innerHTML = '';
+        const list = document.getElementById('visibility-list'); list.innerHTML = '<h4>Groups</h4>';
         groupOrder.forEach(id => {
-            const div = document.createElement('div'); div.style.cssText = "padding:12px; background:#f1f5f9; border-radius:8px; margin-top:5px; font-weight:bold; display:flex; justify-content:space-between; align-items:center;";
-            div.innerHTML = `<span onclick="showGroupEdit('${id}')" style="color:${groups[id].color}">${groups[id].name}</span><button onclick="toggleVis('${id}')" style="width:auto; margin:0; padding:4px 8px; font-size:10px;">${groups[id].visible?'Hide':'Show'}</button>`;
+            const div = document.createElement('div');
+            div.innerHTML = `<button onclick="groups['${id}'].visible = !groups['${id}'].visible; drawGroups();" style="font-size:10px;">${groups[id].name} (Toggle)</button>`;
             list.appendChild(div);
         });
     }
-    function toggleVis(id) { groups[id].visible = !groups[id].visible; updateUI(); drawGroups(); }
-    function deleteSelected() { cy.$(':selected').remove(); hidePanels(); }
-    function reorderGroup(dir) { if(!activeGroupId) return; groupOrder = groupOrder.filter(id => id !== activeGroupId); if(dir === 'front') groupOrder.push(activeGroupId); else groupOrder.unshift(activeGroupId); drawGroups(); }
-    function deleteGroup() { if(confirm("Delete group?")) { delete groups[activeGroupId]; groupOrder = groupOrder.filter(id => id !== activeGroupId); hidePanels(); updateUI(); drawGroups(); } }
-    function runSearch() { const t = document.getElementById('search-input').value.toLowerCase(); cy.nodes().removeClass('highlighted'); if(t) { const targets = cy.nodes('[type="person"]').filter(n => n.data('name').toLowerCase().includes(t)); targets.addClass('highlighted'); if(targets.length) cy.animate({center:{eles:targets}, zoom:1}); } }
-    function clearCache() { if(confirm("Reset App?")) { localStorage.removeItem('relationMapData_v53'); location.reload(); } }
-    function saveData() { const blob = new Blob([JSON.stringify({ elements: cy.elements().map(e=>({group:e.isNode()?'nodes':'edges', data:e.data(), position:e.position()})), groups, groupOrder })], {type: "application/json"}); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = "relationmap_v53.json"; a.click(); }
+
+    function saveData() {
+        const data = JSON.stringify({ elements: cy.elements().map(e=>({group:e.isNode()?'nodes':'edges', data:e.data(), position:e.position()})), groups, groupOrder });
+        const blob = new Blob([data], {type: "application/json"});
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = "map_classic.json"; a.click();
+    }
 
     window.onload = () => {
-        const saved = localStorage.getItem('relationMapData_v53');
+        const saved = localStorage.getItem('relationMapClassic_v54');
         if(saved) {
-            const d = JSON.parse(saved); cy.add(d.elements); groups = d.groups; groupOrder = d.groupOrder || Object.keys(groups);
+            const d = JSON.parse(saved); cy.add(d.elements); groups = d.groups; groupOrder = d.groupOrder;
             updateUI(); drawGroups();
         }
     };
