@@ -2,271 +2,275 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>RelationMap v5.5 (Full Power + Auto-Save)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RelationMap v5.6 (Auto-Save + Collapsible)</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.26.0/cytoscape.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/webcola@3.4.0/WebCola/cola.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/cytoscape-cola@2.5.1/cytoscape-cola.min.js"></script>
     <style>
-        :root { --primary: #4F46E5; --bg: #f8fafc; }
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { display: flex; height: 100vh; font-family: -apple-system, system-ui, sans-serif; background: var(--bg); overflow: hidden; }
+        body { display: flex; height: 100vh; font-family: -apple-system, sans-serif; background: #f8fafc; overflow: hidden; }
         
-        /* SIDEBAR & COLLAPSE LOGIC */
+        /* --- COLLAPSIBLE SIDEBAR INJECTION --- */
         #sidebar { 
-            width: 350px; background: white; border-right: 1px solid #e2e8f0; 
+            width: 320px; background: white; border-right: 1px solid #e2e8f0; 
             display: flex; flex-direction: column; padding: 20px; z-index: 1000; 
             transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); position: relative;
         }
-        #sidebar.collapsed { transform: translateX(-350px); margin-right: -350px; }
+        #sidebar.collapsed { transform: translateX(-320px); margin-right: -320px; }
         #toggle-tab {
             position: absolute; right: -30px; top: 50%; transform: translateY(-50%);
-            width: 30px; height: 80px; background: white; border: 1px solid #e2e8f0;
-            border-left: none; border-radius: 0 10px 10px 0; cursor: pointer;
-            display: flex; align-items: center; justify-content: center; font-weight: bold; color: #64748b;
+            width: 30px; height: 70px; background: white; border: 1px solid #e2e8f0;
+            border-left: none; border-radius: 0 8px 8px 0; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; font-size: 14px; color: #4F46E5;
         }
 
+        h1 { color: #4F46E5; font-size: 1.1rem; font-weight: 800; margin-bottom: 15px; text-transform: uppercase; }
+        #search-input { width: 100%; padding: 10px; border: 2px solid #f1f5f9; border-radius: 8px; margin-bottom: 15px; font-size: 13px; outline: none; }
+        .section-label { font-size: 10px; font-weight: 800; color: #94a3b8; text-transform: uppercase; margin: 18px 0 6px; }
+        button { width: 100%; padding: 8px; margin-bottom: 5px; border-radius: 6px; border: 1px solid #e2e8f0; cursor: pointer; font-weight: 600; font-size: 12px; transition: 0.2s; }
+        .btn-main { background: #4F46E5; color: white; border: none; }
+        .btn-group { background: #10B981; color: white; border: none; }
+        
         #cy-container { flex-grow: 1; position: relative; background: white; }
         #cy { position: absolute; width: 100%; height: 100%; z-index: 1; }
         #overlay-canvas { position: absolute; width: 100%; height: 100%; z-index: 2; pointer-events: none; }
-
-        /* V4.7 REPLICA STYLING */
-        h2 { font-size: 18px; margin-bottom: 15px; color: #1e293b; }
-        .section-label { font-size: 11px; font-weight: 800; color: #94a3b8; text-transform: uppercase; margin: 15px 0 5px; }
-        .panel { background: #f1f5f9; padding: 15px; border-radius: 12px; margin-bottom: 15px; display: none; border: 1px solid #cbd5e1; }
         
-        input, textarea, select { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; margin-top: 5px; font-size: 13px; }
-        button { width: 100%; padding: 10px; margin-bottom: 6px; border-radius: 8px; border: 1px solid #e2e8f0; cursor: pointer; font-weight: 600; font-size: 13px; background: white; transition: 0.2s; }
-        button:hover { background: #f8fafc; }
-        .btn-main { background: var(--primary); color: white; border: none; }
-        .btn-group { background: #10B981; color: white; border: none; }
-        
-        /* COLOR PICKER (V4.7 Style) */
-        .color-row { display: flex; gap: 8px; margin-top: 8px; overflow-x: auto; padding-bottom: 5px; }
-        .color-dot { min-width: 25px; height: 25px; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 0 1px #cbd5e1; cursor: pointer; }
-        .color-dot.active { box-shadow: 0 0 0 2px var(--primary); transform: scale(1.1); }
+        /* --- AUTO-SAVE STATUS INJECTION --- */
+        .save-indicator { position: absolute; top: 15px; left: 15px; z-index: 100; font-size: 10px; color: #94a3b8; pointer-events: none; }
 
-        .status-pill { position: absolute; bottom: 15px; left: 15px; z-index: 100; background: rgba(15, 23, 42, 0.8); color: white; padding: 5px 12px; border-radius: 20px; font-size: 11px; backdrop-filter: blur(4px); }
+        .map-controls { position: absolute; bottom: 20px; right: 20px; z-index: 100; display: flex; gap: 8px; }
+        .mini-btn { width: auto; padding: 6px 12px; background: rgba(255,255,255,0.8); backdrop-filter: blur(4px); font-size: 11px; border: 1px solid #cbd5e1; }
+        .panel { display: none; background: #f8fafc; padding: 15px; border-radius: 10px; border: 1px solid #e2e8f0; margin-top: 10px; }
+        input, textarea { width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 12px; margin-top: 4px; }
+        .color-row { display: flex; gap: 6px; padding: 5px 0; overflow-x: auto; }
+        .color-dot { min-width: 24px; height: 24px; border-radius: 50%; cursor: pointer; border: 2px solid #eee; }
+        .color-dot.active { border-color: #333; transform: scale(1.1); }
+        .tag { display: inline-block; padding: 4px 10px; margin: 2px; border-radius: 20px; font-size: 11px; cursor: pointer; border: 1px solid #cbd5e1; background: white; }
+        .tag.selected { background: #10B981; color: white; border-color: #059669; }
+        .vis-item { display: flex; align-items: center; justify-content: space-between; padding: 8px; background: #f1f5f9; border-radius: 8px; margin-bottom: 5px; cursor: pointer; }
+        .member-checklist { max-height: 120px; overflow-y: auto; background: white; border: 1px solid #e2e8f0; border-radius: 6px; padding: 5px; margin-top: 8px; }
+        .check-item { display: flex; align-items: center; gap: 8px; font-size: 11px; padding: 3px 0; cursor: pointer; }
+        .check-item input { width: auto; margin: 0; }
     </style>
 </head>
 <body>
 
 <div id="sidebar">
     <div id="toggle-tab" onclick="document.getElementById('sidebar').classList.toggle('collapsed')">◀</div>
-    
-    <h2>RelationMap v5.5</h2>
-    
-    <input type="text" id="search-input" placeholder="🔍 Find someone..." oninput="runSearch()" style="margin-bottom: 10px;">
-    
+    <h1>RelationMap v5.6</h1>
+    <input type="text" id="search-input" placeholder="Search & Fly..." oninput="runSearch()">
+    <div style="display:flex; gap:4px;">
+        <button onclick="undo()">Undo</button>
+        <button onclick="saveData()">Export</button>
+        <button onclick="document.getElementById('fileInput').click()">Load</button>
+    </div>
+    <input type="file" id="fileInput" style="display:none" onchange="loadData(event)">
+
+    <div class="section-label">Management</div>
     <button class="btn-main" onclick="addPerson()">+ Add Person</button>
-    <button class="btn-group" onclick="addGroup()">+ Add Group (Selected)</button>
-    <button id="connBtn" onclick="toggleConnectionMode()">🔗 Link Mode: OFF</button>
-    
+    <button class="btn-group" onclick="addGroup()">+ Add Group</button>
+    <button id="connBtn" onclick="toggleConnectionMode()">Link Mode: OFF</button>
+
     <div id="edit-panel" class="panel">
-        <div class="section-label">Edit Person</div>
         <input type="text" id="edit-node-name" oninput="updateNodeName()" placeholder="Name">
-        <textarea id="node-notes" oninput="updateNotes()" placeholder="Notes / Sub-label"></textarea>
+        <textarea id="node-notes" oninput="updateNotes()" style="height:60px;" placeholder="Notes"></textarea>
         <div class="color-row" id="node-color-picker"></div>
-        <button onclick="deleteSelected()" style="color:#ef4444; border:none; margin-top:10px;">Delete Person</button>
+        <div id="group-tags-container"></div>
+        <button onclick="deleteSelected()" style="color:#ef4444; border:none; background:none; text-decoration:underline;">Delete Person</button>
     </div>
 
-    <div id="edge-panel" class="panel" style="background: #fff7ed;">
-        <div class="section-label">Edit Link</div>
-        <input type="text" id="edge-label-input" oninput="updateEdgeLabel()" placeholder="Label">
-        <select id="edge-style-select" onchange="updateEdgeStyle()">
-            <option value="solid">Solid Line</option>
-            <option value="dashed">Dashed Line</option>
-            <option value="dotted">Dotted Line</option>
-        </select>
-        <div class="section-label">Arrows</div>
-        <div style="display:flex; gap:4px;">
-            <button onclick="setArrows('none')" style="flex:1">--</button>
-            <button onclick="setArrows('forward')" style="flex:1">→</button>
-            <button onclick="setArrows('backward')" style="flex:1">←</button>
-            <button onclick="setArrows('both')" style="flex:1">↔</button>
+    <div id="edge-panel" class="panel" style="background:#fff7ed;">
+        <input type="text" id="edge-label-input" oninput="updateEdgeLabel()" placeholder="Relationship">
+        <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:4px;">
+            <button onclick="setEdgeStyle('solid')">Solid</button>
+            <button onclick="setEdgeStyle('dashed')">Dash</button>
+            <button onclick="setEdgeStyle('dotted')">Dot</button>
         </div>
-        <button onclick="deleteSelected()" style="color:#ef4444; border:none; margin-top:10px;">Delete Link</button>
+        <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:4px; margin-top:4px;">
+            <button onclick="setEdgeArrow('none')">--</button>
+            <button onclick="setEdgeArrow('forward')">→</button>
+            <button onclick="setEdgeArrow('backward')">←</button>
+            <button onclick="setEdgeArrow('both')">↔</button>
+        </div>
+        <button onclick="deleteSelected()" style="color:#ef4444; border:none; background:none; text-decoration:underline;">Delete Link</button>
     </div>
 
-    <div class="section-label">Active Groups</div>
-    <div id="visibility-list" style="flex-grow:1; overflow-y:auto; margin-bottom:10px;"></div>
-    
-    <div style="border-top: 1px solid #eee; padding-top: 10px;">
-        <button onclick="saveData()">💾 Export JSON</button>
-        <button onclick="cy.fit(null, 50)">🎯 Center All</button>
+    <div id="group-edit-panel" class="panel" style="background:#f0fdf4;">
+        <input type="text" id="group-name-input" oninput="updateGroupName()" placeholder="Group Name">
+        <div class="color-row" id="group-color-picker"></div>
+        <div class="section-label" style="margin-top:10px;">Members</div>
+        <div id="member-checklist-container" class="member-checklist"></div>
+        <div style="display:flex; gap:4px; margin-top:10px;">
+            <button onclick="reorderGroup('front')">Front</button>
+            <button onclick="reorderGroup('back')">Back</button>
+        </div>
+        <button onclick="deleteGroup()" style="color:#ef4444; border:none; background:none; text-decoration:underline; margin-top:10px;">Delete Group</button>
     </div>
+
+    <div class="section-label">Groups</div>
+    <div id="visibility-list"></div>
+    <button onclick="exportMermaid()" style="margin-top:auto; font-size:10px; color:#4F46E5; background:none; border:none; text-decoration:underline;">Export Mermaid.md</button>
 </div>
 
 <div id="cy-container">
-    <div class="status-pill" id="save-status">Cloud Sync Ready</div>
+    <div class="save-indicator" id="save-status">Cloud Sync Ready</div>
     <div id="cy"></div>
     <canvas id="overlay-canvas"></canvas>
+    <div class="map-controls">
+        <button class="mini-btn" onclick="runAutoLayout()">Physics Spread</button>
+        <button class="mini-btn" onclick="cy.fit(null, 50)">Zoom to Fit</button>
+    </div>
 </div>
 
 <script>
-    let connectionMode = false, selectedNodes = [], groups = {}, groupOrder = [];
+    let connectionMode = false, selectedNodes = [], history = [], groups = {}, activeGroupId = null;
+    let groupOrder = []; 
     const canvas = document.getElementById('overlay-canvas');
     const ctx = canvas.getContext('2d');
-    const palette = ['#4F46E5', '#10B981', '#3B82F6', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899'];
+    const palette = ['#4F46E5', '#10B981', '#3B82F6', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#06B6D4'];
 
     const cy = cytoscape({
         container: document.getElementById('cy'),
         style: [
-            { selector: 'node', style: { 
-                'width': 65, 'height': 65, 'background-color': 'data(color)', 'label': 'data(name)', 
-                'text-valign': 'center', 'color': '#fff', 'font-size': '12px', 'font-weight': 'bold',
-                'text-wrap': 'wrap', 'text-max-width': '60px', 'text-outline-width': 1.5, 'text-outline-color': '#000' 
-            }},
-            { selector: 'node[notes]', style: { 'label': 'data(name)\n(data(notes))' }},
-            { selector: 'edge', style: { 
-                'width': 3, 'line-color': '#94a3b8', 'curve-style': 'bezier', 
-                'target-arrow-shape': 'data(arrow)', 'source-arrow-shape': 'data(sArrow)', 
-                'line-style': 'data(lineStyle)', 'label': 'data(label)', 
-                'edge-text-rotation': 'autorotate', 'font-size': '10px', 'text-background-opacity': 1, 'text-background-color': '#fff' 
-            }},
-            { selector: ':selected', style: { 'border-width': 6, 'border-color': '#fbbf24' }},
-            { selector: '.highlighted', style: { 'border-width': 10, 'border-color': '#4F46E5' }}
+            { selector: 'node[type="person"]', style: { 'width': 60, 'height': 60, 'background-color': 'data(color)', 'label': 'data(name)', 'text-valign': 'center', 'text-halign': 'center', 'color': '#ffffff', 'font-size': '13px', 'font-weight': 'bold', 'text-wrap': 'wrap', 'text-max-width': '55px', 'text-outline-color': '#000000', 'text-outline-width': '1.5px', 'z-index': 10 }},
+            { selector: 'node[type="note"]', style: { 'label': 'data(text)', 'font-size': '10px', 'color': '#64748b', 'text-valign': 'bottom', 'text-halign': 'center', 'background-opacity': 0, 'z-index': 5 }},
+            { selector: 'edge', style: { 'width': 2, 'line-color': '#94a3b8', 'curve-style': 'bezier', 'target-arrow-shape': 'data(arrow)', 'source-arrow-shape': 'data(sArrow)', 'line-style': 'data(lineStyle)', 'label': 'data(label)', 'font-size': '10px', 'edge-text-rotation': 'autorotate', 'text-margin-y': -10, 'text-background-opacity': 1, 'text-background-color': '#fff' }},
+            { selector: ':selected', style: { 'border-width': 4, 'border-color': '#fbbf24' }},
+            { selector: '.highlighted', style: { 'border-width': 6, 'border-color': '#4F46E5' }}
         ]
     });
 
-    // --- AUTO-SAVE ---
+    // --- AUTO-SAVE ENGINE INJECTION ---
     function autoSave() {
-        const data = { elements: cy.elements().map(e => ({ group: e.isNode()?'nodes':'edges', data: e.data(), position: e.position() })), groups, groupOrder };
-        localStorage.setItem('relationMapFull_v55', JSON.stringify(data));
-        document.getElementById('save-status').innerText = "✓ Saved: " + new Date().toLocaleTimeString();
+        const data = { elements: cy.elements().map(e=>({group:e.isNode()?'nodes':'edges', data:e.data(), position:e.position()})), groups, groupOrder };
+        localStorage.setItem('relationMap_v56_autosave', JSON.stringify(data));
+        document.getElementById('save-status').innerText = "✓ Saved " + new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
     }
     cy.on('position dragfree add remove data', autoSave);
 
-    // --- CONVEX HULL (V4.7 Bubbles) ---
+    // --- ORIGINAL V4.7 LOGIC BELOW ---
+    function getConvexHull(points) {
+        if (points.length <= 2) return points;
+        points.sort((a, b) => a.x !== b.x ? a.x - b.x : a.y - b.y);
+        const cross = (a, b, c) => (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x);
+        const lower = []; for (let p of points) { while (lower.length >= 2 && cross(lower[lower.length - 2], lower[lower.length - 1], p) <= 0) lower.pop(); lower.push(p); }
+        const upper = []; for (let i = points.length - 1; i >= 0; i--) { let p = points[i]; while (upper.length >= 2 && cross(upper[upper.length - 2], upper[upper.length - 1], p) <= 0) upper.pop(); upper.push(p); }
+        lower.pop(); upper.pop(); return lower.concat(upper);
+    }
+
+    let groupHulls = []; 
     function drawGroups() {
         canvas.width = canvas.clientWidth; canvas.height = canvas.clientHeight;
-        ctx.clearRect(0,0,canvas.width,canvas.height);
+        ctx.clearRect(0,0,canvas.width,canvas.height); groupHulls = [];
         const zoom = cy.zoom();
         groupOrder.forEach(id => {
-            const g = groups[id]; if(!g || !g.visible || !g.members.length) return;
+            const g = groups[id]; if (!g || !g.visible || g.members.length === 0) return;
             const nodes = g.members.map(mid => cy.getElementById(mid)).filter(n => n.length > 0);
-            if(!nodes.length) return;
-            let pts = [];
+            if (nodes.length === 0) return;
+            let pts = []; let sumX = 0, sumY = 0;
             nodes.forEach(n => {
-                const pos = n.renderedPosition(); const r = 45 * zoom;
+                const pos = n.renderedPosition(); const r = 40 * zoom; sumX += pos.x; sumY += pos.y;
                 for(let i=0; i<8; i++) pts.push({ x: pos.x + r * Math.cos(i*Math.PI/4), y: pos.y + r * Math.sin(i*Math.PI/4) });
             });
             const hull = getConvexHull(pts);
-            ctx.beginPath(); ctx.fillStyle = g.color + '22'; ctx.strokeStyle = g.color + '66'; ctx.lineWidth = 2;
-            ctx.moveTo(hull[0].x, hull[0].y); hull.forEach(p => ctx.lineTo(p.x, p.y));
+            groupHulls.push({ id, hull }); 
+            ctx.beginPath(); ctx.fillStyle = g.color + '15'; ctx.strokeStyle = g.color + '44';
+            ctx.moveTo(hull[0].x, hull[0].y); for(let i=1; i<hull.length; i++) ctx.lineTo(hull[i].x, hull[i].y);
             ctx.closePath(); ctx.fill(); ctx.stroke();
-            ctx.fillStyle = g.color; ctx.font = "bold 12px sans-serif";
-            ctx.fillText(g.name.toUpperCase(), hull[0].x, hull[0].y - 10);
+            ctx.font = "bold 11px sans-serif"; ctx.fillStyle = g.color; ctx.globalAlpha = 0.4;
+            ctx.fillText(g.name.toUpperCase(), sumX/nodes.length - 20, sumY/nodes.length);
+            ctx.globalAlpha = 1;
         });
-    }
-
-    function getConvexHull(pts) {
-        pts.sort((a,b) => a.x - b.x || a.y - b.y);
-        const cross = (a,b,c) => (b.x-a.x)*(c.y-a.y)-(b.y-a.y)*(c.x-a.x);
-        const l = []; for(let p of pts) { while(l.length>=2 && cross(l[l.length-2],l[l.length-1],p)<=0) l.pop(); l.push(p); }
-        const u = []; for(let i=pts.length-1; i>=0; i--) { while(u.length>=2 && cross(u[u.length-2],u[u.length-1],pts[i])<=0) u.pop(); u.push(pts[i]); }
-        return l.concat(u);
     }
     cy.on('render pan zoom', drawGroups);
 
-    // --- CORE ACTIONS ---
-    function addPerson() {
-        const name = prompt("Name:");
-        if(name) cy.add({ group:'nodes', data:{ id:'p'+Date.now(), name, notes:'', type:'person', color:'#4F46E5' }, position:{ x:cy.width()/2, y:cy.height()/2 } });
-    }
-
-    function addGroup() {
-        const name = prompt("Group Name:");
-        if(name) {
-            const id = 'g'+Date.now();
-            const members = cy.$(':selected').filter('node').map(n => n.id());
-            groups[id] = { name, members, visible: true, color: palette[groupOrder.length % palette.length] };
-            groupOrder.push(id); updateUI(); autoSave();
-        }
-    }
-
-    function toggleConnectionMode() { 
-        connectionMode = !connectionMode; 
-        selectedNodes = []; 
-        document.getElementById('connBtn').innerText = `🔗 Link Mode: ${connectionMode?'ON':'OFF'}`;
-        document.getElementById('connBtn').style.background = connectionMode ? '#fbbf24' : '';
-    }
-
     cy.on('tap', (e) => {
-        if(e.target === cy) { hidePanels(); return; }
+        if(e.target === cy) { 
+            const pos = e.renderedPosition;
+            const hit = [...groupHulls].reverse().find(gh => { 
+                ctx.beginPath(); ctx.moveTo(gh.hull[0].x, gh.hull[0].y);
+                for(let i=1; i<gh.hull.length; i++) ctx.lineTo(gh.hull[i].x, gh.hull[i].y);
+                ctx.closePath(); return ctx.isPointInPath(pos.x, pos.y);
+            });
+            if(hit) { showGroupEdit(hit.id); } else { hidePanels(); }
+            return; 
+        }
         const ele = e.target;
-        if(ele.isNode() && connectionMode) {
-            selectedNodes.push(ele.id());
-            if(selectedNodes.length === 2) {
-                cy.add({ group:'edges', data:{ source:selectedNodes[0], target:selectedNodes[1], arrow:'triangle', sArrow:'none', lineStyle:'solid', label:'' } });
-                toggleConnectionMode();
-            }
-        } else if(ele.isNode()) { showPersonEdit(ele); }
-        else if(ele.isEdge()) { showEdgeEdit(ele); }
+        if(ele.isEdge()) { showEdgeEdit(ele); return; }
+        if(ele.data('type') === 'person') {
+            if(connectionMode) {
+                selectedNodes.push(ele.id());
+                if(selectedNodes.length === 2) { recordState(); cy.add({group:'edges', data:{source:selectedNodes[0], target:selectedNodes[1], arrow:'triangle', sArrow:'none', lineStyle:'solid', label:''}}); toggleConnectionMode(); }
+            } else { showPersonEdit(ele); }
+        }
     });
 
-    function showPersonEdit(node) {
-        hidePanels(); document.getElementById('edit-panel').style.display='block';
-        document.getElementById('edit-node-name').value = node.data('name');
-        document.getElementById('node-notes').value = node.data('notes') || '';
-        const picker = document.getElementById('node-color-picker'); picker.innerHTML = '';
-        palette.forEach(c => {
-            const d = document.createElement('div'); d.className = `color-dot ${node.data('color')===c?'active':''}`;
-            d.style.backgroundColor = c; d.onclick = () => { node.data('color', c); showPersonEdit(node); };
-            picker.appendChild(d);
+    function showGroupEdit(id) { 
+        hidePanels(); activeGroupId = id; document.getElementById('group-edit-panel').style.display = 'block'; 
+        document.getElementById('group-name-input').value = groups[id].name; 
+        const picker = document.getElementById('group-color-picker'); picker.innerHTML=''; 
+        palette.forEach(c => { const d = document.createElement('div'); d.className = `color-dot ${groups[id].color === c ? 'active' : ''}`; d.style.backgroundColor = c; d.onclick = () => { recordState(); groups[id].color = c; showGroupEdit(id); updateUI(); drawGroups(); }; picker.appendChild(d); });
+        const container = document.getElementById('member-checklist-container'); container.innerHTML='';
+        cy.nodes('[type="person"]').forEach(p => {
+            const label = document.createElement('label'); label.className = 'check-item';
+            const isChecked = groups[id].members.includes(p.id());
+            label.innerHTML = `<input type="checkbox" ${isChecked?'checked':''} onchange="toggleMember('${id}', '${p.id()}')"> ${p.data('name')}`;
+            container.appendChild(label);
         });
+        cy.nodes().removeClass('highlighted'); const members = groups[id].members.map(mid => cy.getElementById(mid)); members.forEach(m => m.addClass('highlighted'));
     }
 
-    function showEdgeEdit(edge) {
-        hidePanels(); document.getElementById('edge-panel').style.display='block';
-        document.getElementById('edge-label-input').value = edge.data('label') || '';
-        document.getElementById('edge-style-select').value = edge.data('lineStyle') || 'solid';
+    function toggleMember(gid, pid) { recordState(); if(groups[gid].members.includes(pid)) groups[gid].members = groups[gid].members.filter(m=>m!==pid); else groups[gid].members.push(pid); drawGroups(); }
+    function reorderGroup(dir) { if(!activeGroupId) return; groupOrder = groupOrder.filter(id => id !== activeGroupId); if(dir === 'front') groupOrder.push(activeGroupId); else groupOrder.unshift(activeGroupId); drawGroups(); }
+    function syncNotes() { cy.nodes('[type="person"]').forEach(p => { const n = cy.getElementById(p.id()+'_n'); if(n.length) n.position({ x: p.position().x, y: p.position().y + 15 }); }); }
+    cy.on('position', 'node[type="person"]', syncNotes);
+    function runSearch() { const term = document.getElementById('search-input').value.toLowerCase(); cy.nodes().removeClass('highlighted'); if (term) { const targets = cy.nodes('[type="person"]').filter(n => n.data('name').toLowerCase().includes(term)); targets.addClass('highlighted'); cy.animate({ center: { eles: targets }, zoom: 1.0 }, { duration: 500 }); } }
+    
+    function loadData(ev) { const reader = new FileReader(); reader.onload = (e) => { const data = JSON.parse(e.target.result); cy.elements().remove(); cy.add(data.elements || (data.cy && data.cy.elements) || []); groups = data.groups || {}; groupOrder = Object.keys(groups); updateUI(); syncNotes(); drawGroups(); }; reader.readAsText(ev.target.files[0]); }
+    function saveData() { const blob = new Blob([JSON.stringify({ elements: cy.elements().map(e=>({group:e.isNode()?'nodes':'edges', data:e.data(), position:e.position()})), groups })], {type: "application/json"}); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = "map_v4.7.json"; a.click(); }
+    function exportMermaid() { let m = "flowchart LR\n"; cy.nodes('[type="person"]').forEach(n => { m += `    ${n.id()}["${n.data('name')}"]\n`; }); cy.edges().forEach(e => { let arrow = (e.data('arrow') !== 'none' && e.data('sArrow') !== 'none') ? "<-->" : (e.data('arrow') !== 'none' ? "-->" : (e.data('sArrow') !== 'none' ? "<--" : "---")); m += `    ${e.source().id()} ${arrow} ${e.target().id()}\n`; }); Object.keys(groups).forEach(id => { if(groups[id].members.length > 0) m += `    subgraph ${id}["${groups[id].name}"]\n        ${groups[id].members.join('\n        ')}\n    end\n`; }); const blob = new Blob([m], {type: "text/plain"}); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = "mermaid.md"; a.click(); }
+    
+    function addPerson() { const name = prompt("Name:"); if(!name) return; const id='p'+Date.now(); recordState(); cy.add([{group:'nodes', data:{id:id, type:'person', name:name, color:'#4F46E5', notes:''}, position:{x:300,y:300}},{group:'nodes', data:{id:id+'_n', type:'note', text:''}, position:{x:300,y:315}}]); }
+    function addGroup() { const name = prompt("Group Name:"); if(!name) return; const id='g'+Date.now(); recordState(); groups[id] = {name:name, members:[], visible:true, color:palette[Object.keys(groups).length % palette.length]}; groupOrder.push(id); updateUI(); }
+    function toggleConnectionMode() { connectionMode = !connectionMode; selectedNodes = []; document.getElementById('connBtn').innerText = `Link Mode: ${connectionMode ? 'ON' : 'OFF'}`; }
+    
+    function showPersonEdit(node) { 
+        hidePanels(); document.getElementById('edit-panel').style.display='block'; 
+        document.getElementById('edit-node-name').value = node.data('name'); 
+        document.getElementById('node-notes').value = node.data('notes')||''; 
+        const picker = document.getElementById('node-color-picker'); picker.innerHTML=''; 
+        palette.forEach(c=>{ const d=document.createElement('div'); d.className=`color-dot ${node.data('color')===c?'active':''}`; d.style.backgroundColor=c; d.onclick=()=>{recordState(); node.data('color',c); showPersonEdit(node);}; picker.appendChild(d); }); 
+        const container = document.getElementById('group-tags-container'); container.innerHTML=''; 
+        Object.keys(groups).forEach(id=>{ const t=document.createElement('span'); t.className=`tag ${groups[id].members.includes(node.id())?'selected':''}`; t.innerText=groups[id].name; t.onclick=()=>{ recordState(); if(groups[id].members.includes(node.id())) groups[id].members=groups[id].members.filter(m=>m!==node.id()); else groups[id].members.push(node.id()); showPersonEdit(node); drawGroups(); }; container.appendChild(t); }); 
     }
-
-    function hidePanels() { document.querySelectorAll('.panel').forEach(p=>p.style.display='none'); }
+    
+    function showEdgeEdit(edge) { hidePanels(); document.getElementById('edge-panel').style.display='block'; document.getElementById('edge-label-input').value = edge.data('label')||''; }
+    function updateGroupName() { if(activeGroupId) { groups[activeGroupId].name = document.getElementById('group-name-input').value; updateUI(); drawGroups(); } }
+    function deleteGroup() { if(activeGroupId && confirm("Delete group?")) { delete groups[activeGroupId]; groupOrder = groupOrder.filter(id => id !== activeGroupId); hidePanels(); updateUI(); drawGroups(); } }
+    function hidePanels() { document.querySelectorAll('.panel').forEach(p=>p.style.display='none'); cy.nodes().removeClass('highlighted'); }
     function updateNodeName() { const n = cy.$(':selected')[0]; if(n) n.data('name', document.getElementById('edit-node-name').value); }
-    function updateNotes() { const n = cy.$(':selected')[0]; if(n) n.data('notes', document.getElementById('node-notes').value); }
-    function updateEdgeLabel() { const e = cy.$(':selected')[0]; if(e) e.data('label', document.getElementById('edge-label-input').value); }
-    function updateEdgeStyle() { const e = cy.$(':selected')[0]; if(e) e.data('lineStyle', document.getElementById('edge-style-select').value); }
-    function setArrows(dir) {
-        const e = cy.$(':selected')[0]; if(!e || !e.isEdge()) return;
-        e.data('arrow', (dir==='forward'||dir==='both'?'triangle':'none'));
-        e.data('sArrow', (dir==='backward'||dir==='both'?'triangle':'none'));
-    }
-    function deleteSelected() { cy.$(':selected').remove(); hidePanels(); }
+    function updateNotes() { const n = cy.$(':selected')[0]; if(n) { const v = document.getElementById('node-notes').value; n.data('notes',v); cy.getElementById(n.id()+'_n').data('text', v); } }
+    function updateEdgeLabel() { const e = cy.$(':selected')[0]; if(e && e.isEdge()) e.data('label', document.getElementById('edge-label-input').value); }
+    function setEdgeStyle(s) { const e = cy.$(':selected'); if(e.isEdge()) e.data('lineStyle', s); }
+    function setEdgeArrow(dir) { const e = cy.$(':selected'); if(e.isEdge()) { e.data('arrow', (dir==='forward'||dir==='both'?'triangle':'none')); e.data('sArrow', (dir==='backward'||dir==='both'?'triangle':'none')); } }
+    function runAutoLayout() { cy.layout({ name: 'cola', infinite: false, fit: true, padding: 50, nodeSpacing: 100 }).run(); }
+    
+    function updateUI() { const list = document.getElementById('visibility-list'); list.innerHTML = ''; Object.keys(groups).forEach(id => { const div = document.createElement('div'); div.className = 'vis-item'; div.innerHTML = `<span onclick="showGroupEdit('${id}'); event.stopPropagation();" style="flex-grow:1; font-weight:700; color:${groups[id].color}">${groups[id].name}</span><span style="font-size:9px; color:#4F46E5; font-weight:bold" onclick="toggleVis('${id}'); event.stopPropagation();">${groups[id].visible ? 'HIDE' : 'SHOW'}</span>`; list.appendChild(div); }); }
+    function toggleVis(id) { groups[id].visible = !groups[id].visible; updateUI(); drawGroups(); }
+    function recordState() { history.push(JSON.stringify({ elements: cy.elements().map(e=>({group:e.isNode()?'nodes':'edges', data:e.data(), position:e.position()})), groups })); if(history.length > 20) history.shift(); }
+    function undo() { if(history.length) { const s = JSON.parse(history.pop()); cy.elements().remove(); cy.add(s.elements); groups = s.groups; groupOrder = Object.keys(groups); updateUI(); syncNotes(); drawGroups(); } }
+    function deleteSelected() { recordState(); cy.$(':selected').forEach(e=>{ if(e.data('type')==='person') cy.getElementById(e.id()+'_n').remove(); e.remove(); }); hidePanels(); updateUI(); }
 
-    function updateUI() {
-        const list = document.getElementById('visibility-list'); list.innerHTML = '';
-        groupOrder.forEach(id => {
-            const div = document.createElement('div'); div.style.cssText = "display:flex; justify-content:space-between; margin-bottom:5px; align-items:center;";
-            div.innerHTML = `<span style="color:${groups[id].color}; font-weight:bold; font-size:12px;">${groups[id].name}</span>
-                             <button onclick="toggleGroupVis('${id}')" style="width:auto; margin:0; padding:2px 8px; font-size:10px;">${groups[id].visible?'Hide':'Show'}</button>`;
-            list.appendChild(div);
-        });
-    }
-    function toggleGroupVis(id) { groups[id].visible = !groups[id].visible; updateUI(); drawGroups(); }
-
-    function runSearch() {
-        const t = document.getElementById('search-input').value.toLowerCase();
-        cy.nodes().removeClass('highlighted');
-        if(t) {
-            const targets = cy.nodes().filter(n => n.data('name').toLowerCase().includes(t));
-            targets.addClass('highlighted');
-            if(targets.length) cy.animate({ center: { eles: targets }, zoom: 1.2 });
-        }
-    }
-
-    function saveData() {
-        const data = JSON.stringify({ elements: cy.elements().map(e=>({group:e.isNode()?'nodes':'edges', data:e.data(), position:e.position()})), groups, groupOrder });
-        const blob = new Blob([data], {type: "application/json"});
-        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = "relationmap_full.json"; a.click();
-    }
-
+    // --- INITIAL LOAD INJECTION ---
     window.onload = () => {
-        const saved = localStorage.getItem('relationMapFull_v55');
+        const saved = localStorage.getItem('relationMap_v56_autosave');
         if(saved) {
-            const d = JSON.parse(saved); cy.add(d.elements); groups = d.groups; groupOrder = d.groupOrder;
-            updateUI(); drawGroups(); cy.fit(null, 50);
+            const data = JSON.parse(saved);
+            cy.add(data.elements);
+            groups = data.groups || {};
+            groupOrder = data.groupOrder || Object.keys(groups);
+            updateUI(); syncNotes(); drawGroups();
         }
     };
 </script>
