@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RelationMap v5.6 (Auto-Save + Collapsible)</title>
+    <title>RelationMap v5.7</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.26.0/cytoscape.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/webcola@3.4.0/WebCola/cola.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/cytoscape-cola@2.5.1/cytoscape-cola.min.js"></script>
@@ -11,36 +11,54 @@
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { display: flex; height: 100vh; font-family: -apple-system, sans-serif; background: #f8fafc; overflow: hidden; }
         
-        /* --- COLLAPSIBLE SIDEBAR INJECTION --- */
         #sidebar { 
             width: 320px; background: white; border-right: 1px solid #e2e8f0; 
-            display: flex; flex-direction: column; padding: 20px; z-index: 1000; 
-            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); position: relative;
+            display: flex; flex-direction: column; z-index: 1000;
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
+            height: 100vh; overflow-y: auto; scrollbar-width: thin; position: relative;
         }
+        
+        .sidebar-content { padding: 20px; width: 100%; }
         #sidebar.collapsed { transform: translateX(-320px); margin-right: -320px; }
-        #toggle-tab {
-            position: absolute; right: -30px; top: 50%; transform: translateY(-50%);
-            width: 30px; height: 70px; background: white; border: 1px solid #e2e8f0;
-            border-left: none; border-radius: 0 8px 8px 0; cursor: pointer;
-            display: flex; align-items: center; justify-content: center; font-size: 14px; color: #4F46E5;
-        }
 
-        h1 { color: #4F46E5; font-size: 1.1rem; font-weight: 800; margin-bottom: 15px; text-transform: uppercase; }
+        /* FLOATING TOGGLE */
+        #toggle-tab {
+            position: fixed; left: 320px; top: 50%; transform: translateY(-50%);
+            width: 30px; height: 70px; background: #4F46E5; border-radius: 0 8px 8px 0; 
+            cursor: pointer; display: flex; align-items: center; justify-content: center; 
+            font-size: 14px; color: white; z-index: 9999; 
+            transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 2px 0 8px rgba(0,0,0,0.15);
+        }
+        #sidebar.collapsed + #toggle-tab { left: 0; }
+
+        /* --- UPDATED TOP-RIGHT CONTROLS --- */
+        .map-controls { 
+            position: absolute; top: 20px; right: 20px; 
+            z-index: 100; display: flex; gap: 10px; 
+        }
+        .mini-btn { 
+            width: auto; padding: 8px 14px; 
+            background: #ffffff; color: #1e293b;
+            font-size: 11px; font-weight: 700;
+            border: 1px solid #cbd5e1; border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            cursor: pointer; transition: 0.2s;
+        }
+        .mini-btn:hover { background: #f1f5f9; border-color: #94a3b8; }
+
+        h1 { color: #606263; font-size: 1.1rem; font-weight: 800; margin-bottom: 15px; text-transform: uppercase; }
         #search-input { width: 100%; padding: 10px; border: 2px solid #f1f5f9; border-radius: 8px; margin-bottom: 15px; font-size: 13px; outline: none; }
         .section-label { font-size: 10px; font-weight: 800; color: #94a3b8; text-transform: uppercase; margin: 18px 0 6px; }
         button { width: 100%; padding: 8px; margin-bottom: 5px; border-radius: 6px; border: 1px solid #e2e8f0; cursor: pointer; font-weight: 600; font-size: 12px; transition: 0.2s; }
         .btn-main { background: #4F46E5; color: white; border: none; }
         .btn-group { background: #10B981; color: white; border: none; }
         
-        #cy-container { flex-grow: 1; position: relative; background: white; }
+        #cy-container { flex-grow: 1; position: relative; background: white; z-index: 1; }
         #cy { position: absolute; width: 100%; height: 100%; z-index: 1; }
         #overlay-canvas { position: absolute; width: 100%; height: 100%; z-index: 2; pointer-events: none; }
         
-        /* --- AUTO-SAVE STATUS INJECTION --- */
-        .save-indicator { position: absolute; top: 15px; left: 15px; z-index: 100; font-size: 10px; color: #94a3b8; pointer-events: none; }
-
-        .map-controls { position: absolute; bottom: 20px; right: 20px; z-index: 100; display: flex; gap: 8px; }
-        .mini-btn { width: auto; padding: 6px 12px; background: rgba(255,255,255,0.8); backdrop-filter: blur(4px); font-size: 11px; border: 1px solid #cbd5e1; }
+        .save-indicator { position: absolute; bottom: 15px; left: 15px; z-index: 100; font-size: 10px; color: #94a3b8; pointer-events: none; }
         .panel { display: none; background: #f8fafc; padding: 15px; border-radius: 10px; border: 1px solid #e2e8f0; margin-top: 10px; }
         input, textarea { width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 12px; margin-top: 4px; }
         .color-row { display: flex; gap: 6px; padding: 5px 0; overflow-x: auto; }
@@ -57,66 +75,70 @@
 <body>
 
 <div id="sidebar">
-    <div id="toggle-tab" onclick="document.getElementById('sidebar').classList.toggle('collapsed')">◀</div>
-    <h1>RelationMap v5.6</h1>
-    <input type="text" id="search-input" placeholder="Search & Fly..." oninput="runSearch()">
-    <div style="display:flex; gap:4px;">
-        <button onclick="undo()">Undo</button>
-        <button onclick="saveData()">Export</button>
-        <button onclick="document.getElementById('fileInput').click()">Load</button>
-    </div>
-    <input type="file" id="fileInput" style="display:none" onchange="loadData(event)">
-
-    <div class="section-label">Management</div>
-    <button class="btn-main" onclick="addPerson()">+ Add Person</button>
-    <button class="btn-group" onclick="addGroup()">+ Add Group</button>
-    <button id="connBtn" onclick="toggleConnectionMode()">Link Mode: OFF</button>
-
-    <div id="edit-panel" class="panel">
-        <input type="text" id="edit-node-name" oninput="updateNodeName()" placeholder="Name">
-        <textarea id="node-notes" oninput="updateNotes()" style="height:60px;" placeholder="Notes"></textarea>
-        <div class="color-row" id="node-color-picker"></div>
-        <div id="group-tags-container"></div>
-        <button onclick="deleteSelected()" style="color:#ef4444; border:none; background:none; text-decoration:underline;">Delete Person</button>
-    </div>
-
-    <div id="edge-panel" class="panel" style="background:#fff7ed;">
-        <input type="text" id="edge-label-input" oninput="updateEdgeLabel()" placeholder="Relationship">
-        <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:4px;">
-            <button onclick="setEdgeStyle('solid')">Solid</button>
-            <button onclick="setEdgeStyle('dashed')">Dash</button>
-            <button onclick="setEdgeStyle('dotted')">Dot</button>
+    <div class="sidebar-content">
+        <h1>RelationMap v5.7</h1>
+        <input type="text" id="search-input" placeholder="Search & Fly..." oninput="runSearch()">
+        <div style="display:flex; gap:4px;">
+            <button onclick="undo()">Undo</button>
+            <button onclick="saveData()">Export</button>
+            <button onclick="document.getElementById('fileInput').click()">Load</button>
         </div>
-        <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:4px; margin-top:4px;">
-            <button onclick="setEdgeArrow('none')">--</button>
-            <button onclick="setEdgeArrow('forward')">→</button>
-            <button onclick="setEdgeArrow('backward')">←</button>
-            <button onclick="setEdgeArrow('both')">↔</button>
-        </div>
-        <button onclick="deleteSelected()" style="color:#ef4444; border:none; background:none; text-decoration:underline;">Delete Link</button>
-    </div>
+        <input type="file" id="fileInput" style="display:none" onchange="loadData(event)">
 
-    <div id="group-edit-panel" class="panel" style="background:#f0fdf4;">
-        <input type="text" id="group-name-input" oninput="updateGroupName()" placeholder="Group Name">
-        <div class="color-row" id="group-color-picker"></div>
-        <div class="section-label" style="margin-top:10px;">Members</div>
-        <div id="member-checklist-container" class="member-checklist"></div>
-        <div style="display:flex; gap:4px; margin-top:10px;">
-            <button onclick="reorderGroup('front')">Front</button>
-            <button onclick="reorderGroup('back')">Back</button>
-        </div>
-        <button onclick="deleteGroup()" style="color:#ef4444; border:none; background:none; text-decoration:underline; margin-top:10px;">Delete Group</button>
-    </div>
+        <div class="section-label">Management</div>
+        <button class="btn-main" onclick="addPerson()">+ Add Person</button>
+        <button class="btn-group" onclick="addGroup()">+ Add Group</button>
+        <button id="connBtn" onclick="toggleConnectionMode()">Link Mode: OFF</button>
 
-    <div class="section-label">Groups</div>
-    <div id="visibility-list"></div>
-    <button onclick="exportMermaid()" style="margin-top:auto; font-size:10px; color:#4F46E5; background:none; border:none; text-decoration:underline;">Export Mermaid.md</button>
+        <div id="edit-panel" class="panel">
+            <input type="text" id="edit-node-name" oninput="updateNodeName()" placeholder="Name">
+            <textarea id="node-notes" oninput="updateNotes()" style="height:60px;" placeholder="Notes"></textarea>
+            <div class="color-row" id="node-color-picker"></div>
+            <div id="group-tags-container"></div>
+            <button onclick="deleteSelected()" style="color:#ef4444; border:none; background:none; text-decoration:underline;">Delete Person</button>
+        </div>
+
+        <div id="edge-panel" class="panel" style="background:#fff7ed;">
+            <input type="text" id="edge-label-input" oninput="updateEdgeLabel()" placeholder="Relationship">
+            <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:4px;">
+                <button onclick="setEdgeStyle('solid')">Solid</button>
+                <button onclick="setEdgeStyle('dashed')">Dash</button>
+                <button onclick="setEdgeStyle('dotted')">Dot</button>
+            </div>
+            <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:4px; margin-top:4px;">
+                <button onclick="setEdgeArrow('none')">--</button>
+                <button onclick="setEdgeArrow('forward')">→</button>
+                <button onclick="setEdgeArrow('backward')">←</button>
+                <button onclick="setEdgeArrow('both')">↔</button>
+            </div>
+            <button onclick="deleteSelected()" style="color:#ef4444; border:none; background:none; text-decoration:underline;">Delete Link</button>
+        </div>
+
+        <div id="group-edit-panel" class="panel" style="background:#f0fdf4;">
+            <input type="text" id="group-name-input" oninput="updateGroupName()" placeholder="Group Name">
+            <div class="color-row" id="group-color-picker"></div>
+            <div class="section-label" style="margin-top:10px;">Members</div>
+            <div id="member-checklist-container" class="member-checklist"></div>
+            <div style="display:flex; gap:4px; margin-top:10px;">
+                <button onclick="reorderGroup('front')">Front</button>
+                <button onclick="reorderGroup('back')">Back</button>
+            </div>
+            <button onclick="deleteGroup()" style="color:#ef4444; border:none; background:none; text-decoration:underline; margin-top:10px;">Delete Group</button>
+        </div>
+
+        <div class="section-label">Groups</div>
+        <div id="visibility-list"></div>
+        <button onclick="exportMermaid()" style="margin-top:20px; font-size:10px; color:#4F46E5; background:none; border:none; text-decoration:underline;">Export Mermaid.md</button>
+    </div>
 </div>
+
+<div id="toggle-tab" onclick="toggleSidebar()">◀</div>
 
 <div id="cy-container">
     <div class="save-indicator" id="save-status">Cloud Sync Ready</div>
     <div id="cy"></div>
     <canvas id="overlay-canvas"></canvas>
+    
     <div class="map-controls">
         <button class="mini-btn" onclick="runAutoLayout()">Physics Spread</button>
         <button class="mini-btn" onclick="cy.fit(null, 50)">Zoom to Fit</button>
@@ -124,11 +146,20 @@
 </div>
 
 <script>
+    /* Toggle Functionality */
+    function toggleSidebar() {
+        const sidebar = document.getElementById('sidebar');
+        const tab = document.getElementById('toggle-tab');
+        sidebar.classList.toggle('collapsed');
+        tab.innerText = sidebar.classList.contains('collapsed') ? '▶' : '◀';
+    }
+
+    /* ALL ORIGINAL LOGIC */
     let connectionMode = false, selectedNodes = [], history = [], groups = {}, activeGroupId = null;
     let groupOrder = []; 
     const canvas = document.getElementById('overlay-canvas');
     const ctx = canvas.getContext('2d');
-    const palette = ['#4F46E5', '#10B981', '#3B82F6', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#06B6D4'];
+    const palette = ['#4F46E5', '#10B981', '#3B82F6', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#06B6D4', '#FFFFFF'];
 
     const cy = cytoscape({
         container: document.getElementById('cy'),
@@ -141,7 +172,6 @@
         ]
     });
 
-    // --- AUTO-SAVE ENGINE INJECTION ---
     function autoSave() {
         const data = { elements: cy.elements().map(e=>({group:e.isNode()?'nodes':'edges', data:e.data(), position:e.position()})), groups, groupOrder };
         localStorage.setItem('relationMap_v56_autosave', JSON.stringify(data));
@@ -149,7 +179,6 @@
     }
     cy.on('position dragfree add remove data', autoSave);
 
-    // --- ORIGINAL V4.7 LOGIC BELOW ---
     function getConvexHull(points) {
         if (points.length <= 2) return points;
         points.sort((a, b) => a.x !== b.x ? a.x - b.x : a.y - b.y);
@@ -262,7 +291,6 @@
     function undo() { if(history.length) { const s = JSON.parse(history.pop()); cy.elements().remove(); cy.add(s.elements); groups = s.groups; groupOrder = Object.keys(groups); updateUI(); syncNotes(); drawGroups(); } }
     function deleteSelected() { recordState(); cy.$(':selected').forEach(e=>{ if(e.data('type')==='person') cy.getElementById(e.id()+'_n').remove(); e.remove(); }); hidePanels(); updateUI(); }
 
-    // --- INITIAL LOAD INJECTION ---
     window.onload = () => {
         const saved = localStorage.getItem('relationMap_v56_autosave');
         if(saved) {
@@ -276,3 +304,4 @@
 </script>
 </body>
 </html>
+
