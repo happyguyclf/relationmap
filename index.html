@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RelationMap v6.0</title>
+    <title>RelationMap v6.5</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.26.0/cytoscape.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/webcola@3.4.0/WebCola/cola.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/cytoscape-cola@2.5.1/cytoscape-cola.min.js"></script>
@@ -32,7 +32,7 @@
         }
         #sidebar.collapsed + #toggle-tab { left: 0; }
 
-        /* --- UPDATED TOP-RIGHT CONTROLS --- */
+        /* ---  TOP-RIGHT CONTROLS --- */
         .map-controls { 
             position: absolute; top: 20px; right: 20px; 
             z-index: 100; display: flex; gap: 10px; 
@@ -56,15 +56,11 @@
     z-index: 999;  
     
     font-family: sans-serif;
-    font-size: 9px;
-    font-weight: bold;
-    color: #94a3b8; 
+    font-size: 9px; font-weight: bold; color: #94a3b8; 
     background: rgba(255, 255, 255, 0.7); 
-    padding: 5px 10px;
-    border-radius: 4px;
+    padding: 5px 10px;  border-radius: 4px;
     pointer-events: none;
-    letter-spacing: 0.5px;
-    text-transform: uppercase;
+    letter-spacing: 0.5px; text-transform: uppercase;
 }
 
 
@@ -83,7 +79,9 @@
         #overlay-canvas { position: absolute; width: 100%; height: 100%; z-index: 1; pointer-events: none; }
         
         .save-indicator { position: absolute; bottom: 15px; left: 15px; z-index: 100; font-size: 10px; color: #94a3b8; pointer-events: none; }
-        .panel { display: none; background: #f8fafc; padding: 15px; border-radius: 10px; border: 1px solid #e2e8f0; margin-top: 10px; }
+
+        .panel { display: none; background: #f8fafc; padding: 15px; padding-bottom: 5px; border-radius: 10px; border: 1px solid #e2e8f0; margin-top: 10px; }
+       
         input, textarea { width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 12px; margin-top: 4px; }
         .color-row { display: flex; gap: 6px; padding: 5px 0; overflow-x: auto; }
         .color-dot { min-width: 24px; height: 24px; border-radius: 50%; cursor: pointer; border: 2px solid #eee; }
@@ -94,13 +92,39 @@
         .member-checklist { max-height: 120px; overflow-y: auto; background: white; border: 1px solid #e2e8f0; border-radius: 6px; padding: 5px; margin-top: 8px; }
         .check-item { display: flex; align-items: center; gap: 8px; font-size: 11px; padding: 3px 0; cursor: pointer; }
         .check-item input { width: auto; margin: 0; }
+
+.tab-bar {
+    display: flex;
+    border-top: 1px solid #e2e8f0;
+   margin-top: 5px; margin-bottom: 11px;
+}
+.tab-btn {
+    flex: 1;
+    padding: 10px; border: none; background: none;
+    cursor: pointer;
+    font-size: 12px; color: #64748b;
+    border-bottom: 1px solid #64748b;
+    transition: all 0.3s;
+}
+.tab-btn.active {
+    color: #4F46E5; font-weight: bold;
+    border-bottom: 2px solid #4F46E5;
+ }
+.tab-content {
+    animation: fadeIn 0.3s ease;
+}
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
     </style>
 </head>
 
 <body>
 <div id="sidebar">
     <div class="sidebar-content">
-        <h1>RelationMap v6.1</h1>
+        <h1>RelationMap v6.5</h1>
         <input type="text" id="search-input" placeholder="Search & Fly..." oninput="runSearch()">
         <div style="display:flex; gap:4px;">
             <button onclick="undo()">Undo</button>
@@ -120,7 +144,9 @@
             <textarea id="node-notes" oninput="updateNotes()" style="height:60px;" placeholder="Notes"></textarea>
             <div class="color-row" id="node-color-picker"></div>
             <div id="group-tags-container"></div>
-            <button onclick="deleteSelected()" style="color:#ef4444; border:none; background:none; text-decoration:underline;">Delete Person</button>
+<div style="display:flex; justify-content: center; margin-top:5px;">
+            <button onclick="deleteSelected()" style="color:#ef4444; width:auto ;  border:none; background:none; box-shadow: 0 2px 4px rgba(0,0,0,0.05);  text-decoration:underline;">Delete Person</button>
+</div>
         </div>
 
 
@@ -132,12 +158,14 @@
                 <button onclick="setEdgeStyle('dotted')">Dot</button>
             </div>
             <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:4px; margin-top:4px;">
-                <button onclick="setEdgeArrow('none')">--</button>
+                <button onclick="setEdgeArrow('none')">─</button>
                 <button onclick="setEdgeArrow('forward')">→</button>
                 <button onclick="setEdgeArrow('backward')">←</button>
                 <button onclick="setEdgeArrow('both')">↔</button>
             </div>
-            <button onclick="deleteSelected()" style="color:#ef4444; border:none; background:none; text-decoration:underline;">Delete Link</button>
+<div style="display:flex; justify-content: center; margin-top:5px;">
+            <button onclick="deleteSelected()" style="color:#ef4444;  width: auto; border:none; background:none; box-shadow: 0 2px 4px rgba(0,0,0,0.05);  text-decoration:underline;">Delete Link</button>
+</div>
         </div>
 
 
@@ -149,13 +177,36 @@
             <div id="member-checklist-container" class="member-checklist"></div>
             <div style="display:flex; gap:4px; margin-top:10px;">
                 <button onclick="reorderGroup('front')">Front</button>
-                <button onclick="reorderGroup('back')">Back</button>
+                 <button onclick="reorderGroup('back')">Back</button>
+<button id="group-vis-toggle" onclick="toggleCurrentGroupVis()" style="text-decoration:underline;"> Hide </button>
             </div>
-            <button onclick="deleteGroup()" style="color:#ef4444; border:none; background:none; text-decoration:underline; margin-top:10px;">Delete Group</button>
-        </div>
+<div style="display:flex; justify-content: center; margin-top:5px;">
+     <button onclick="deleteGroup()" style="color:#ef4444;  width: auto; border:none; background:none; box-shadow: 0 2px 4px rgba(0,0,0,0.05);  text-decoration:underline; ">Delete Group</button>
+</div>
+     </div>
+            
 
-        <div class="section-label">Groups</div>
-        <div id="visibility-list"></div>
+<div id="itemlist-panel">
+    <div class="tab-bar">
+        <button class="tab-btn active" onclick="openTab(event, 'tab-group')">Groups</button>
+        <button class="tab-btn" onclick="openTab(event, 'tab-person')">People</button>
+        <button class="tab-btn" onclick="openTab(event, 'tab-edge')">Connections</button>
+    </div>
+
+    <div id="tab-group" class="tab-content" style="display: block;">
+<div id="visibility-list"></div>
+    </div>
+
+    <div id="tab-person" class="tab-content" style="display: none;">
+<div id="person-list"></div>
+    </div>
+
+   <div id="tab-edge" class="tab-content" style="display: none;">
+<div id="connection-list"></div>
+    </div>
+</div>
+
+                
         <button onclick="exportMermaid()" style="margin-top:20px; font-size:10px; color:#4F46E5; background:none; border:none; text-decoration:underline;">Export Mermaid.md</button>
     </div>
 </div>
@@ -193,7 +244,7 @@
         style: [
             { selector: 'node[type="person"]', 
 style: { 'width': 60, 'height': 60, 'background-color': 'data(color)', 'label': 'data(name)', 'text-valign': 'center', 'text-halign': 'center', 'color': '#ffffff', 'font-size': '13px', 'font-weight': 'bold', 'text-wrap': 'wrap', 'text-max-width': '55px', 'text-outline-color': '#000000', 'text-outline-width': '1.2px', 'z-index': 9 }},
-            { selector: 'node[type="note"]', style: { 'width': 60, 'height': 10, 'shape': 'rectangle', 'label': 'data(text)', 'font-size': '10px', 'color': '#64748b', 'text-valign': 'center', 'text-halign': 'center', 'background-opacity': 0, 'z-index': 10, grabbable: false}},
+            { selector: 'node[type="note"]', style: { 'width': 60, 'height': 10, 'shape': 'rectangle', 'label': 'data(text)', 'font-size': '10px', 'color': '#64748b', 'text-valign': 'center', 'text-halign': 'center', 'background-opacity': 0, 'z-index': 10 }},
             { selector: 'edge', style: { 'width': 2, 'line-color': '#94a3b8', 'curve-style': 'bezier', 'target-arrow-shape': 'data(arrow)', 'source-arrow-shape': 'data(sArrow)', 'line-style': 'data(lineStyle)', 'label': 'data(label)', 'font-size': '10px', 'edge-text-rotation': 'autorotate', 'text-margin-y': -10, 'text-background-opacity': 0 }},
 
             { selector: ':selected', style: { 'border-width': 4, 'border-color': '#fbbf24' }},
@@ -266,6 +317,8 @@ cy.on('add', 'node[type="note"]', (e) => {
     e.target.grabbable(false);
 });
 
+cy.nodes('[type="note"]').forEach(n => n.grabbable(false));
+
     cy.on('tap', (e) => {
         if(e.target === cy) { 
             const pos = e.renderedPosition;
@@ -280,38 +333,25 @@ cy.on('add', 'node[type="note"]', (e) => {
         const ele = e.target;
         if(ele.isEdge()) { showEdgeEdit(ele); return; }
         if(ele.data('type') === 'person') {
-   //connection action        
+   
+//connection action        
        if(connectionMode) {
                 selectedNodes.push(ele.id());
                 if(selectedNodes.length === 2) { recordState(); cy.add({group:'edges', data:{source:selectedNodes[0], target:selectedNodes[1], arrow:'triangle', sArrow:'none', lineStyle:'solid', label:''}}); toggleConnectionMode(); }
-            } else { showPersonEdit(ele); }
+            } else { showPersonEdit(ele); }; updateElist();
         }
     });
 
-
-    function showGroupEdit(id) { 
-        hidePanels(); activeGroupId = id; document.getElementById('group-edit-panel').style.display = 'block'; 
-        document.getElementById('group-name-input').value = groups[id].name; 
-        const picker = document.getElementById('group-color-picker'); picker.innerHTML=''; 
-        palette.forEach(c => { const d = document.createElement('div'); d.className = `color-dot ${groups[id].color === c ? 'active' : ''}`; d.style.backgroundColor = c; d.onclick = () => { recordState(); groups[id].color = c; showGroupEdit(id); updateUI(); drawGroups(); }; picker.appendChild(d); });
-        const container = document.getElementById('member-checklist-container'); container.innerHTML='';
-        cy.nodes('[type="person"]').forEach(p => {
-            const label = document.createElement('label'); label.className = 'check-item';
-            const isChecked = groups[id].members.includes(p.id());
-            label.innerHTML = `<input type="checkbox" ${isChecked?'checked':''} onchange="toggleMember('${id}', '${p.id()}')"> ${p.data('name')}`;
-            container.appendChild(label);
-        });
-        cy.nodes().removeClass('highlighted'); const members = groups[id].members.map(mid => cy.getElementById(mid)); members.forEach(m => m.addClass('highlighted'));
-    }
-
+    
     function toggleMember(gid, pid) { recordState(); if(groups[gid].members.includes(pid)) groups[gid].members = groups[gid].members.filter(m=>m!==pid); else groups[gid].members.push(pid); drawGroups(); }
     function reorderGroup(dir) { if(!activeGroupId) return; groupOrder = groupOrder.filter(id => id !== activeGroupId); if(dir === 'front') groupOrder.push(activeGroupId); else groupOrder.unshift(activeGroupId); drawGroups(); }
     function syncNotes() { cy.nodes('[type="person"]').forEach(p => { const n = cy.getElementById(p.id()+'_n'); if(n.length) n.position({ x: p.position().x, y: p.position().y + 35 }); }); }
     cy.on('position', 'node[type="person"]', syncNotes);
     function runSearch() { const term = document.getElementById('search-input').value.toLowerCase(); cy.nodes().removeClass('highlighted'); if (term) { const targets = cy.nodes('[type="person"]').filter(n => n.data('name').toLowerCase().includes(term)); targets.addClass('highlighted'); cy.animate({ center: { eles: targets }, zoom: 1.0 }, { duration: 500 }); } }
     
-    function loadData(ev) { const reader = new FileReader(); reader.onload = (e) => { const data = JSON.parse(e.target.result); cy.elements().remove(); cy.add(data.elements || (data.cy && data.cy.elements) || []); groups = data.groups || {}; groupOrder = Object.keys(groups); updateUI(); syncNotes(); drawGroups(); }; reader.readAsText(ev.target.files[0]); }
-    function saveData() { const blob = new Blob([JSON.stringify({ elements: cy.elements().map(e=>({group:e.isNode()?'nodes':'edges', data:e.data(), position:e.position()})), groups })], {type: "application/json"}); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = "map_v4.7.json"; a.click(); }
+    function loadData(ev) { const reader = new FileReader(); reader.onload = (e) => { const data = JSON.parse(e.target.result); cy.elements().remove(); cy.add(data.elements || (data.cy && data.cy.elements) || []); groups = data.groups || {}; groupOrder = Object.keys(groups); updateUI(); updatePlist();  updateElist(); syncNotes(); drawGroups(); }; reader.readAsText(ev.target.files[0]); }
+    
+function saveData() { const blob = new Blob([JSON.stringify({ elements: cy.elements().map(e=>({group:e.isNode()?'nodes':'edges', data:e.data(), position:e.position()})), groups })], {type: "application/json"}); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = "map_v6.3.json"; a.click(); }
  
    function exportMermaid() { let m = "flowchart LR\n"; cy.nodes('[type="person"]').forEach(n => { m += `    ${n.id()}["${n.data('name')}"]\n`; }); cy.edges().forEach(e => { let arrow = (e.data('arrow') !== 'none' && e.data('sArrow') !== 'none') ? "<-->" : (e.data('arrow') !== 'none' ? "-->" : (e.data('sArrow') !== 'none' ? "<--" : "---")); m += `    ${e.source().id()} ${arrow} ${e.target().id()}\n`; }); Object.keys(groups).forEach(id => { if(groups[id].members.length > 0) m += `    subgraph ${id}["${groups[id].name}"]\n        ${groups[id].members.join('\n        ')}\n    end\n`; }); const blob = new Blob([m], {type: "text/plain"}); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = "mermaid.md"; a.click(); }
     
@@ -319,10 +359,11 @@ cy.on('add', 'node[type="note"]', (e) => {
 if(!name) return; const id='p'+Date.now(); recordState(); 
 cy.add([{group:'nodes', data:{id:id, type:'person', name:name, color:'#4F46E5', notes:''}, position:{x:300,y:300}},
 {group:'nodes', data:{id:id+'_n', type:'note', text:''}, 
-Position:{x:300,y:335}, grabbable: false, selectable: false }]); 
+Position:{x:300,y:335}, grabbable: false, selectable: false }]); updatePlist(); updateElist();
 }
     
 function addGroup() { const name = prompt("Group Name:"); if(!name) return; const id='g'+Date.now(); recordState(); groups[id] = {name:name, members:[], visible:true, color:palette[Object.keys(groups).length % palette.length]}; groupOrder.push(id); updateUI(); }
+
     function toggleConnectionMode() { connectionMode = !connectionMode; selectedNodes = []; 
 document.getElementById('connBtn').classList.toggle('btn-group');
 document.getElementById('connBtn').innerText = `Link Mode: ${connectionMode ? 'ON' : 'OFF'}`; }
@@ -333,18 +374,52 @@ document.getElementById('connBtn').innerText = `Link Mode: ${connectionMode ? 'O
         document.getElementById('edit-node-name').value = node.data('name'); 
         document.getElementById('node-notes').value = node.data('notes')||''; 
         const picker = document.getElementById('node-color-picker'); picker.innerHTML=''; 
-        palette.forEach(c=>{ const d=document.createElement('div'); d.className=`color-dot ${node.data('color')===c?'active':''}`; d.style.backgroundColor=c; d.onclick=()=>{recordState(); node.data('color',c); showPersonEdit(node);}; picker.appendChild(d); }); 
+        palette.forEach(c=>{ const d=document.createElement('div'); d.className=`color-dot ${node.data('color')===c?'active':''}`; d.style.backgroundColor=c; d.onclick=()=>{recordState(); node.data('color',c); showPersonEdit(node); updatePlist();  updateElist();}; picker.appendChild(d); }); 
         const container = document.getElementById('group-tags-container'); container.innerHTML=''; 
         Object.keys(groups).forEach(id=>{ const t=document.createElement('span'); t.className=`tag ${groups[id].members.includes(node.id())?'selected':''}`; t.innerText=groups[id].name; t.onclick=()=>{ recordState(); if(groups[id].members.includes(node.id())) groups[id].members=groups[id].members.filter(m=>m!==node.id()); else groups[id].members.push(node.id()); showPersonEdit(node); drawGroups(); }; container.appendChild(t); }); 
     }
     
-    function showEdgeEdit(edge) { hidePanels(); document.getElementById('edge-panel').style.display='block'; document.getElementById('edge-label-input').value = edge.data('label')||''; }
+    function showEdgeEdit(edge) { hidePanels(); document.getElementById('edge-panel').style.display='block'; document.getElementById('edge-label-input').value = edge.data('label')||''; updateElist();}
    
+    function showGroupEdit(id) { 
+        hidePanels(); activeGroupId = id; document.getElementById('group-edit-panel').style.display = 'block'; 
+        document.getElementById('group-name-input').value = groups[id].name; 
+        const picker = document.getElementById('group-color-picker'); picker.innerHTML=''; 
+        palette.forEach(c => { const d = document.createElement('div'); d.className = `color-dot ${groups[id].color === c ? 'active' : ''}`; d.style.backgroundColor = c; d.onclick = () => { recordState(); groups[id].color = c; showGroupEdit(id); updateUI(); drawGroups(); }; picker.appendChild(d); });
+        const container = document.getElementById('member-checklist-container'); container.innerHTML=''; 
+const visBtn = document.getElementById('group-vis-toggle'); visBtn.innerText = groups[id].visible ? 'Hide' : 'Show';
+        cy.nodes('[type="person"]').forEach(p => {
+            const label = document.createElement('label'); label.className = 'check-item';
+            const isChecked = groups[id].members.includes(p.id());
+            label.innerHTML = `<input type="checkbox" ${isChecked?'checked':''} onchange="toggleMember('${id}', '${p.id()}')"> ${p.data('name')}`;
+            container.appendChild(label);
+        });
+        cy.nodes().removeClass('highlighted'); const members = groups[id].members.map(mid => cy.getElementById(mid)); members.forEach(m => m.addClass('highlighted'));
+    }
+
+function toggleCurrentGroupVis() {
+    // activeGroupId is already set by your showGroupEdit function
+    const id = activeGroupId; 
+    const group = groups[id];
+    recordState();
+       group.visible = !group.visible;
+    // Apply visibility to the map
+     updateUI(); drawGroups();
+    showGroupEdit(id); 
+}
+
+  function updateGroupVisbtn() {const id = activeGroupId; 
+const visBtn = document.getElementById('group-vis-toggle'); visBtn.innerText = groups[id].visible ? 'Hide' : 'Show';}
+
   function updateGroupName() { if(activeGroupId) { groups[activeGroupId].name = document.getElementById('group-name-input').value; updateUI(); drawGroups(); } }
-    function deleteGroup() { if(activeGroupId && confirm("Delete group?")) { delete groups[activeGroupId]; groupOrder = groupOrder.filter(id => id !== activeGroupId); hidePanels(); updateUI(); drawGroups(); } }
-    function hidePanels() { document.querySelectorAll('.panel').forEach(p=>p.style.display='none'); cy.nodes().removeClass('highlighted'); }
+  
+  function deleteGroup() { if(activeGroupId && confirm("Delete group?")) { delete groups[activeGroupId]; groupOrder = groupOrder.filter(id => id !== activeGroupId); hidePanels(); updateUI(); drawGroups(); } }
    
- function updateNodeName() { const n = cy.$(':selected')[0]; if(n) n.data('name', document.getElementById('edit-node-name').value); }
+  function deleteSelected() { recordState(); cy.$(':selected').forEach(e=>{ if(e.data('type')==='person') cy.getElementById(e.id()+'_n').remove(); e.remove(); }); hidePanels(); updateUI(); updatePlist(); updateElist();}
+
+ function hidePanels() { document.querySelectorAll('.panel').forEach(p=>p.style.display='none'); cy.nodes().removeClass('highlighted'); }
+   
+ function updateNodeName() { const n = cy.$(':selected')[0]; if(n) n.data('name', document.getElementById('edit-node-name').value); updatePlist();  updateElist();}
    
 function updateNotes() { 
     const n = cy.$(':selected')[0]; 
@@ -359,23 +434,99 @@ const initialLabel = fullVal.length > 10 ? fullVal.substring(0, 10) + "..." : fu
     }
 }
 
- 
-
-
    
  //connection edit panel
 function updateEdgeLabel() { const e = cy.$(':selected')[0]; if(e && e.isEdge()) e.data('label', document.getElementById('edge-label-input').value); }
-    function setEdgeStyle(s) { const e = cy.$(':selected'); if(e.isEdge()) e.data('lineStyle', s); }
-    function setEdgeArrow(dir) { const e = cy.$(':selected'); if(e.isEdge()) { e.data('arrow', (dir==='forward'||dir==='both'?'triangle':'none')); e.data('sArrow', (dir==='backward'||dir==='both'?'triangle':'none')); } }
-    function runAutoLayout() { cy.layout({ name: 'cola', infinite: false, fit: true, padding: 50, nodeSpacing: 100 }).run(); }
+    function setEdgeStyle(s) { const e = cy.$(':selected'); if(e.isEdge()) e.data('lineStyle', s); updateElist();}
+    function setEdgeArrow(dir) { const e = cy.$(':selected'); if(e.isEdge()) { e.data('arrow', (dir==='forward'||dir==='both'?'triangle':'none')); e.data('sArrow', (dir==='backward'||dir==='both'?'triangle':'none')); updateElist();} }
     
-    function updateUI() { const list = document.getElementById('visibility-list'); list.innerHTML = ''; Object.keys(groups).forEach(id => { const div = document.createElement('div'); div.className = 'vis-item'; div.innerHTML = `<span onclick="showGroupEdit('${id}'); event.stopPropagation();" style="flex-grow:1; font-weight:700; color:${groups[id].color}">${groups[id].name}</span><span style="font-size:9px; color:#4F46E5; font-weight:bold" onclick="toggleVis('${id}'); event.stopPropagation();">${groups[id].visible ? 'HIDE' : 'SHOW'}</span>`; list.appendChild(div); }); }
-   
-    function toggleVis(id) { groups[id].visible = !groups[id].visible; updateUI(); drawGroups(); }
+function runAutoLayout() { cy.layout({ name: 'cola', infinite: false, fit: true, padding: 50, nodeSpacing: 100 }).run(); }
     
-    function recordState() { history.push(JSON.stringify({ elements: cy.elements().map(e=>({group:e.isNode()?'nodes':'edges', data:e.data(), position:e.position()})), groups })); if(history.length > 20) history.shift(); }
-    function undo() { if(history.length) { const s = JSON.parse(history.pop()); cy.elements().remove(); cy.add(s.elements); groups = s.groups; groupOrder = Object.keys(groups); updateUI(); syncNotes(); drawGroups(); } }
-    function deleteSelected() { recordState(); cy.$(':selected').forEach(e=>{ if(e.data('type')==='person') cy.getElementById(e.id()+'_n').remove(); e.remove(); }); hidePanels(); updateUI(); }
+
+function openTab(evt, tabName) {
+    //Hide all tab content
+document.querySelectorAll(".tab-content").forEach(tab => {
+        tab.style.display = "none";
+    });
+  //Remove "active" class from all buttons
+document.querySelectorAll(".tab-btn").forEach(btn => {
+        btn.classList.remove("active");
+    });
+// Show the current tab and add "active" class to the button
+document.getElementById(tabName).style.display = "block";
+    evt.currentTarget.classList.add("active");
+if (tabName === 'tab-edge') {
+    updateElist();
+}
+}
+
+    function updateUI() { const list = document.getElementById('visibility-list'); list.innerHTML = ''; Object.keys(groups).forEach(id => { const div = document.createElement('div'); div.className = 'vis-item'; div.innerHTML = `<span onclick="showGroupEdit('${id}'); event.stopPropagation();" style="flex-grow:1; font-weight:700; color:${groups[id].color}">${groups[id].name}</span><span style="font-size:9px; color:#4F46E5; font-weight:bold" onclick="toggleVis('${id}'); event.stopPropagation();">${groups[id].visible ? 'HIDE' : 'SHOW'}</span>`; list.appendChild(div); }); 
+}
+    function toggleVis(id) { groups[id].visible = !groups[id].visible; updateUI(); drawGroups(); updateGroupVisbtn();}
+ 
+function updatePlist() {
+    const listElement = document.getElementById('person-list');
+    listElement.innerHTML = ''; 
+    // Use the $ selector to find all 'person' nodes
+    const people = cy.$('node[type="person"]');
+    //  Loop through each person found
+    people.forEach(person => {
+        const name = person.data('name');
+        const color = person.data('color');
+       // Create a list item (li)
+        const li = document.createElement('li');
+        li.style.cssText = "padding: 8px; border-bottom: 1px solid #eee; cursor: pointer; display: flex; align-items: center;";     
+        // Add a small color dot next to the name
+        li.innerHTML = `<span style="width:10px; height:10px; background:${color}; border-radius:50%; margin-right:10px;"></span>
+            ${name} `;
+    // 4. Make it interactive: clicking the name selects them on the map
+        li.onclick = () => {
+            cy.elements().unselect();      person.select();          
+            cy.center(person);    showPersonEdit(person);   
+        };
+        listElement.appendChild(li);
+    });
+}
+
+ function updateElist() {
+    const linklist = document.getElementById('connection-list');
+linklist.innerHTML = '';
+const links = cy.edges();
+links.forEach(edge => {
+const source = edge.source();
+const target = edge.target();
+        const sourceName = source.data('name');
+        const targetName = target.data('name');
+
+const lineStyle = edge.style('line-style'); 
+ const arrowShape = edge.style('target-arrow-shape'); 
+ const sArrowShape = edge.style('source-arrow-shape'); 
+
+ let lineSymbol = "──"; 
+if (lineStyle === 'dashed') lineSymbol = "-----"; 
+if (lineStyle === 'dotted') lineSymbol = "⋯⋯"; 
+ const arrowHeadright = (arrowShape && arrowShape !== 'none') ? "⊳" : "─ "; 
+const arrowHeadleft = (sArrowShape && sArrowShape !== 'none') ? " ⊲" : " ─"; 
+       
+const lli = document.createElement('lli');
+        lli.style.cssText = "padding: 10px; border-bottom: 1px solid #eee; cursor: pointer; display: flex; align-items: center; font-size: 13px; color: #645f9a;";     
+  lli.innerHTML = `
+   <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;"> 
+<span style="flex: 1; text-align: right; font-weight: 400; padding-right: 10px">${sourceName}</span> 
+<div style="width: 80px; text-align: center; white-space: nowrap; color: #64748b;">&nbsp; ${arrowHeadleft}${lineSymbol}${arrowHeadright}&nbsp; </div> 
+<span style="flex: 1; text-align: left; font-weight: 400; padding-left: 10px">${targetName}</span> 
+        `;  
+         lli.onclick = () => {
+            cy.elements().unselect();
+            edge.select();
+            cy.animate({ center: { eles: edge }, zoom: 1.5 }, { duration: 400 }); showEdgeEdit(edge);        };
+
+        linklist.appendChild(lli);
+    });
+}
+
+    function recordState() { history.push(JSON.stringify({ elements: cy.elements().map(e=>({group:e.isNode()?'nodes':'edges', data:e.data(), position:e.position()})), groups })); if(history.length > 20) history.shift(); } 
+  function undo() { if(history.length) { const s = JSON.parse(history.pop()); cy.elements().remove(); cy.add(s.elements); groups = s.groups; groupOrder = Object.keys(groups); updateUI(); syncNotes(); drawGroups(); updatePlist();  updateElist(); } }
 
     window.onload = () => {
         const saved = localStorage.getItem('relationMap_v56_autosave');
@@ -384,7 +535,7 @@ function updateEdgeLabel() { const e = cy.$(':selected')[0]; if(e && e.isEdge())
             cy.add(data.elements);
             groups = data.groups || {};
             groupOrder = data.groupOrder || Object.keys(groups);
-            updateUI(); syncNotes(); drawGroups();
+            updateUI(); syncNotes(); drawGroups(); updatePlist(); updateElist();
         }
     };
 </script>
