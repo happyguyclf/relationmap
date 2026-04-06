@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RelationMap v6.7</title>
+    <title>RelationMap v7.1</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.26.0/cytoscape.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/webcola@3.4.0/WebCola/cola.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/cytoscape-cola@2.5.1/cytoscape-cola.min.js"></script>
@@ -123,7 +123,7 @@
 <body>
 <div id="sidebar">
     <div class="sidebar-content">
-        <h1>RelationMap v6.7</h1>    
+        <h1>RelationMap v7.1</h1>    
  
    <button id="info-btn" onclick="toggleInfoPopup()" style="
         position: absolute; 
@@ -143,7 +143,7 @@ Dotted line: knowing/recognising each other & had/have interactions;<br>
 Solid line: very close relationship;<br>
 Dash line: not knowing each other / almost no interaction.<br>
 Of course you can use this mind map making tool for other purposes.<br>
-Your map will be stored temporarily in your own browser. So, don’t worry about losing your map when closing the browser (unless you delete the cache). Export it as a JSON file to save your work into your device. </p>
+Your map will be stored temporarily in your own browser. So, don’t worry about losing your map when closing the browser (unless you are going to delete the cache). Export it as a JSON file to save your work into your device. </p>
         <p style="margin-bottom:0; font-size:9px; color:#666; text-align: right;">Created by HappyGuy119</p>
     </div>
 
@@ -167,30 +167,30 @@ Your map will be stored temporarily in your own browser. So, don’t worry about
             <div class="color-row" id="node-color-picker"></div>
             <div id="group-tags-container"></div>
 <div style="display:flex; justify-content: center; margin-top:5px;">
+<button id="person-vis-toggle" onclick="togglePersonVis()" style="text-decoration:underline; width:auto; margin-right:7px; font-weight: 600; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">Hide Person</button>
             <button onclick="deleteSelected()" style="color:#ef4444; width:auto ;  border:none; background:none; box-shadow: 0 2px 4px rgba(0,0,0,0.05);  text-decoration:underline;">Delete Person</button>
 </div>
         </div>
 
 
-        <div id="edge-panel" class="panel" style="background:#fff7ed;">
+        <div id="edge-panel" class="panel" style=" background:#fff7ed;">
             <input type="text" id="edge-label-input" oninput="updateEdgeLabel()" placeholder="Relationship">
+<div style="display:flex; justify-content: center; margin-top:5px;">
+  <div id="edge-participants" style="width: atuo; padding: 8px; background: #f8fafc; border-radius: 6px; border: 1px solid #e2e8f0; font-size: 13px; display: flex; align-items: center; justify-content: space-between;"> 
+     <span id="edge-source-name" style="font-weight: 600; color: #443b60;"></span> 
+     <span style="color: #94a3b8;">&nbsp──&nbsp</span> 
+     <span id="edge-target-name" style="font-weight: 600; color: #443b60;"></span> 
+  </div> 
+</div>
             <textarea id="edge-notes"  oninput="updateEdgeNotes()" style="height:60px;" placeholder="Notes"></textarea>
-            <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:4px;">
-                <button onclick="setEdgeStyle('solid')">Solid</button>
-                <button onclick="setEdgeStyle('dotted')">Dot</button>
-                <button onclick="setEdgeStyle('dashed')">Dash</button>                
+            <div id="edge-style-container" style="display:grid; grid-template-columns: repeat(3, 1fr); gap:4px;">      
             </div>
-            <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:4px; margin-top:4px;">
-                <button onclick="setEdgeArrow('none')">─</button>
-                <button onclick="setEdgeArrow('forward')">→</button>
-                <button onclick="setEdgeArrow('backward')">←</button>
-                <button onclick="setEdgeArrow('both')">↔</button>
+            <div id="edge-arrow-container" style="display:grid; grid-template-columns: repeat(4, 1fr); gap:4px; margin-top:4px;">
             </div>
 <div style="display:flex; justify-content: center; margin-top:5px;">
             <button onclick="deleteSelected()" style="color:#ef4444;  width: auto; border:none; background:none; box-shadow: 0 2px 4px rgba(0,0,0,0.05);  text-decoration:underline;">Delete Link</button>
 </div>
         </div>
-
 
 
         <div id="group-edit-panel" class="panel" style="background:#f0fdf4;">
@@ -378,7 +378,7 @@ cy.nodes('[type="note"]').forEach(n => n.grabbable(false));
      //adding connection     
        if(connectionMode) {
                 selectedNodes.push(ele.id());
-                if(selectedNodes.length === 2) { recordState(); cy.add({group:'edges', data:{source:selectedNodes[0], target:selectedNodes[1], arrow:'triangle', sArrow:'none', lineStyle:'dotted', label:'', notes:''}}); toggleConnectionMode(); }
+                if(selectedNodes.length === 2) { recordState(); cy.add({group:'edges', data:{id:ed, source:selectedNodes[0], target:selectedNodes[1], arrow:'triangle', sArrow:'none', lineStyle:'dotted', label:'', notes:''}}); toggleConnectionMode(); }
             } else { showPersonEdit(ele); }; updateElist();
         }
     });
@@ -421,8 +421,19 @@ if (document.getElementById('edit-panel').style.display === 'block' && activePer
         const picker = document.getElementById('node-color-picker'); picker.innerHTML=''; 
         palette.forEach(c=>{ const d=document.createElement('div'); d.className=`color-dot ${node.data('color')===c?'active':''}`; d.style.backgroundColor=c; d.onclick=()=>{recordState(); node.data('color',c); showPersonEdit(node); updatePlist();  updateElist();}; picker.appendChild(d); }); 
         const container = document.getElementById('group-tags-container'); container.innerHTML=''; 
+const visBtn = document.getElementById('person-vis-toggle'); visBtn.innerText = node.visible() ? 'Hide Person' : 'Show Person'; 
         Object.keys(groups).forEach(id=>{ const t=document.createElement('span'); t.className=`tag ${groups[id].members.includes(node.id())?'selected':''}`; t.innerText=groups[id].name; t.onclick=()=>{ recordState(); if(groups[id].members.includes(node.id())) groups[id].members=groups[id].members.filter(m=>m!==node.id()); else groups[id].members.push(node.id()); showPersonEdit(node); drawGroups(); }; container.appendChild(t); }); 
     }
+
+function togglePersonVis() {
+    if (!activePersonNode) return;
+    recordState();
+    const person = activePersonNode;
+    const note = cy.getElementById(person.id() + '_n');
+    if (person.visible()) { person.hide();
+        if (note.length) note.hide();
+    } else { person.show();
+        if (note.length) note.show(); }    document.getElementById('person-vis-toggle').innerText = person.visible() ? 'Hide Person' : 'Show Person'; updatePlist(); updateElist();}
 
 function updateNodeName() { const n = cy.$(':selected')[0]; if(n) n.data('name', document.getElementById('edit-node-name').value); updatePlist();  updateElist();}
     
@@ -440,22 +451,85 @@ const initialLabel = fullVal.length > 10 ? fullVal.substring(0, 10) + "..." : fu
 }
 
  //Connection edit 
-   function showEdgeEdit(edge) { hidePanels(); document.getElementById('edge-panel').style.display='block'; document.getElementById('edge-label-input').value = edge.data('label')||''; updateElist();
-   document.getElementById('edge-notes').value = edge.data('notes')||''; }
+function showEdgeEdit(edge) {
+    hidePanels();
+    activeEdge = edge;
+    document.getElementById('edge-panel').style.display = 'block';
+    // Sync Inputs
+    document.getElementById('edge-label-input').value = edge.data('label') || '';
+    document.getElementById('edge-notes').value = edge.data('notes') || '';
+    // Sync Names & Opacity
+    const sourceNode = edge.source();
+    const targetNode = edge.target();
+    const sourceSpan = document.getElementById('edge-source-name');
+    const targetSpan = document.getElementById('edge-target-name');  
+    sourceSpan.innerText = sourceNode.data('name');
+    targetSpan.innerText = targetNode.data('name');
+    sourceSpan.style.opacity = sourceNode.visible() ? "1" : "0.5";
+    targetSpan.style.opacity = targetNode.visible() ? "1" : "0.5";
+    // --- Generate Style Buttons ---
+    const styleCont = document.getElementById('edge-style-container');
+    styleCont.innerHTML = '';
+    const styles = [
+        { id: 'solid', label: 'Solid' },
+        { id: 'dotted', label: 'Dot' },
+        { id: 'dashed', label: 'Dash' }
+    ];
+    styles.forEach(s => {
+        const btn = document.createElement('button');
+        btn.innerText = s.label;
+        const isSel = edge.data('lineStyle') === s.id;
+        btn.style.border = isSel ? "2px solid black" : "1px solid #ccc";
+        btn.onclick = () => { setEdgeStyle(s.id); showEdgeEdit(edge); };
+        styleCont.appendChild(btn);
+    });
+    // --- Generate Arrow Buttons ---
+    const arrowCont = document.getElementById('edge-arrow-container');
+    arrowCont.innerHTML = '';
+    const curF = edge.data('arrow') === 'triangle';
+    const curB = edge.data('sArrow') === 'triangle';    
+    const dirs = [
+        { id: 'none', label: '─' },
+        { id: 'forward', label: '→' },
+        { id: 'backward', label: '←' },
+        { id: 'both', label: '↔' }
+    ];
+    dirs.forEach(d => {
+        const btn = document.createElement('button');
+        btn.innerText = d.label;
+        
+        let isSel = false;
+        if (d.id === 'none') isSel = !curF && !curB;
+        else if (d.id === 'forward') isSel = curF && !curB;
+        else if (d.id === 'backward') isSel = !curF && curB;
+        else if (d.id === 'both') isSel = curF && curB;
+        btn.style.border = isSel ? "2px solid black" : "1px solid #ccc";
+        btn.onclick = () => { setEdgeArrow(d.id); showEdgeEdit(edge); };
+        arrowCont.appendChild(btn);
+    });
+    updateElist();
+}
 
-    function updateEdgeLabel() { const e = cy.$(':selected')[0]; if(e && e.isEdge()) e.data('label', document.getElementById('edge-label-input').value); }
+function updateEdgeLabel() {  if(activeEdge) {
+        activeEdge.data('label', document.getElementById('edge-label-input').value); 
+        updateElist();    }}
+  function updateEdgeNotes() { const e = cy.$(':selected')[0]; if(e && e.isEdge()) e.data('notes', document.getElementById('edge-notes').value); recordState();}
+
     function setEdgeStyle(s) { const e = cy.$(':selected'); if(e.isEdge()) e.data('lineStyle', s); updateElist();}
-    function setEdgeArrow(dir) { const e = cy.$(':selected'); if(e.isEdge()) { e.data('arrow', (dir==='forward'||dir==='both'?'triangle':'none')); e.data('sArrow', (dir==='backward'||dir==='both'?'triangle':'none')); updateElist();} }
+    function setEdgeArrow(dir) { const e = cy.$(':selected'); if(e.isEdge()) { 
+e.data('arrow', (dir==='forward'||dir==='both'?'triangle':'none')); 
+e.data('sArrow', (dir==='backward'||dir==='both'?'triangle':'none')); updateElist();} }
 
-    function updateEdgeNotes() { const e = cy.$(':selected')[0]; if(e && e.isEdge()) e.data('notes', document.getElementById('edge-notes').value); }
-
-//Group edit    
+  //Group edit    
     function showGroupEdit(id) { 
         hidePanels(); activeGroupId = id; document.getElementById('group-edit-panel').style.display = 'block'; 
         document.getElementById('group-name-input').value = groups[id].name; 
 document.getElementById('group-notes').value = groups[id].notes ||'';
         const picker = document.getElementById('group-color-picker'); picker.innerHTML=''; 
-        palette.forEach(c => { const d = document.createElement('div'); d.className = `color-dot ${groups[id].color === c ? 'active' : ''}`; d.style.backgroundColor = c; d.onclick = () => { recordState(); groups[id].color = c; showGroupEdit(id); updateUI(); drawGroups(); }; picker.appendChild(d); });
+        palette.forEach(c => { 
+const d = document.createElement('div'); 
+d.className = `color-dot ${groups[id].color === c ? 'active' : ''}`; 
+d.style.backgroundColor = c; d.onclick = () => { recordState(); groups[id].color = c; showGroupEdit(id); updateUI(); drawGroups(); }; picker.appendChild(d); });
         const container = document.getElementById('member-checklist-container'); container.innerHTML=''; 
 const visBtn = document.getElementById('group-vis-toggle'); visBtn.innerText = groups[id].visible ? 'Hide' : 'Show';
         cy.nodes('[type="person"]').forEach(p => {
@@ -480,6 +554,7 @@ function toggleCurrentGroupVis() {
      updateUI(); drawGroups();
     showGroupEdit(id); 
 }
+
   function updateGroupVisbtn() {const id = activeGroupId; 
 const visBtn = document.getElementById('group-vis-toggle'); visBtn.innerText = groups[id].visible ? 'Hide' : 'Show';}
 
@@ -511,7 +586,7 @@ if (tabName === 'tab-edge') {
     function updateUI() { const list = document.getElementById('visibility-list'); list.innerHTML = ''; Object.keys(groups).forEach(id => { const div = document.createElement('div'); div.className = 'vis-item'; div.innerHTML = `<span onclick="showGroupEdit('${id}'); event.stopPropagation();" style="flex-grow:1; font-weight:700; color:${groups[id].color}">${groups[id].name}</span><span style="font-size:9px; color:#333; text-decoration:underline; font-weight:bold" onclick="toggleVis('${id}'); event.stopPropagation();">${groups[id].visible ? 'HIDE' : 'SHOW'}</span>`; list.appendChild(div); }); 
 }
 
-    function toggleVis(id) { groups[id].visible = !groups[id].visible; updateUI(); drawGroups(); updateGroupVisbtn();}
+    function toggleVis(id) { recordState(); groups[id].visible = !groups[id].visible; updateUI(); drawGroups(); updateGroupVisbtn();}
  
 
 function updatePlist() {
@@ -523,19 +598,47 @@ function updatePlist() {
     people.forEach(person => {
         const name = person.data('name');
         const color = person.data('color');
+  const isVisible = person.visible();
        // Create a list item (li)
         const li = document.createElement('li');
-        li.style.cssText = "padding: 8px; border-bottom: 1px solid #eee; cursor: pointer; display: flex; align-items: center;";     
+        li.style.cssText = "padding: 8px; border-bottom: 1px solid #eee; cursor: pointer; display: flex; align-items: center; justify-content: space-between;";     
         // Add a small color dot next to the name
-        li.innerHTML = `<span style="width:10px; height:10px; background:${color}; border-radius:50%; margin-right:10px;"></span>
-            ${name} `;
+        li.innerHTML = `
+<div style="display: flex; align-items: center;">
+<span style="width:10px; height:10px; background:${color}; border-radius:50%; margin-right:10px;"></span>
+<span style="${!isVisible ? 'opacity: 0.5;' : ''}">${name}</span>
+ </div>
+ <span class="toggle-btn" style="font-size:11px; color:#666; text-decoration:underline; font-weight:bold; cursor: pointer; ">${isVisible ? 'HIDE' : 'SHOW'}</span>
+        `;
     // 4. Make it interactive: clicking the name selects them on the map
         li.onclick = () => {
-            cy.elements().unselect();      person.select();          
-            cy.animate({ center: { eles: person }, zoom: 1.5 }, { duration: 300 });
-showPersonEdit(person);  };
+          if (person.visible()) {cy.elements().unselect();      person.select();          
+            cy.animate({ center: { eles: person }, zoom: 1.5 }, { duration: 300 });}
+showPersonEdit(person); };
+const toggleBtn = li.querySelector('.toggle-btn'); 
+toggleBtn.onclick = (e) => { e.stopPropagation(); togglePersonListVis(person.id());
+};
         listElement.appendChild(li);
     });
+}
+
+function togglePersonListVis(id) {
+    const person = cy.getElementById(id);
+    const note = cy.getElementById(id + '_n');
+    recordState();
+        if (person.visible()) {
+        person.hide();
+        if (note.length) note.hide();
+    } else {
+   person.show();
+   if (note.length) note.show();    }
+    updatePlist(); updateElist();
+    if (activePersonNode && activePersonNode.id() === id) {
+        showPersonEdit(person);}
+if (activeEdge) { 
+const sourceId = activeEdge.source().id(); 
+const targetId = activeEdge.target().id();
+ if (id === sourceId || id === targetId) { showEdgeEdit(activeEdge); } }
 }
 
  function updateElist() {
@@ -547,6 +650,8 @@ const source = edge.source();
 const target = edge.target();
         const sourceName = source.data('name');
         const targetName = target.data('name');
+const sourceOpacity = source.visible() ? '1' : '0.3'; 
+const targetOpacity = target.visible() ? '1' : '0.3';
 const lineStyle = edge.style('line-style'); 
  const arrowShape = edge.style('target-arrow-shape'); 
  const sArrowShape = edge.style('source-arrow-shape'); 
@@ -555,18 +660,18 @@ if (lineStyle === 'dashed') lineSymbol = "-----";
 if (lineStyle === 'dotted') lineSymbol = "⋯⋯"; 
  const arrowHeadright = (arrowShape && arrowShape !== 'none') ? "⊳" : "─ "; 
 const arrowHeadleft = (sArrowShape && sArrowShape !== 'none') ? " ⊲" : " ─"; 
-const lli = document.createElement('lli');
-        lli.style.cssText = "padding: 10px; border-bottom: 1px solid #eee; cursor: pointer; display: flex; align-items: center; font-size: 13px; color: #645f9a;";     
+const lli = document.createElement('li');
+        lli.style.cssText = "padding: 10px; border-bottom: 1px solid #eee; cursor: pointer; display: flex; align-items: center; font-size: 13px; color: #20124d;";     
   lli.innerHTML = `
    <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;"> 
-<span style="flex: 1; text-align: right; font-weight: 400; padding-right: 10px">${sourceName}</span> 
+<span style="flex: 1; text-align: right; font-weight: 400; padding-right: 10px; opacity: ${sourceOpacity};">${sourceName}</span> 
 <div style="width: 80px; text-align: center; white-space: nowrap; color: #64748b;">&nbsp; ${arrowHeadleft}${lineSymbol}${arrowHeadright}&nbsp; </div> 
-<span style="flex: 1; text-align: left; font-weight: 400; padding-left: 10px">${targetName}</span> 
+<span style="flex: 1; text-align: left; font-weight: 400; padding-left: 10px; opacity: ${targetOpacity};">${targetName}</span> 
         `;  
          lli.onclick = () => {
-            cy.elements().unselect();
+            if (edge.visible()) { cy.elements().unselect();
             edge.select();
-            cy.animate({ center: { eles: edge }, zoom: 1.5 }, { duration: 350 }); showEdgeEdit(edge);        };
+            cy.animate({ center: { eles: edge }, zoom: 1.5 }, { duration: 350 }); } showEdgeEdit(edge);    };
         linklist.appendChild(lli);
     });
 }
