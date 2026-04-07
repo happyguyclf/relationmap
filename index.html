@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RelationMap v7.4</title>
+    <title>RelationMap v8.0</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.26.0/cytoscape.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/webcola@3.4.0/WebCola/cola.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/cytoscape-cola@2.5.1/cytoscape-cola.min.js"></script>
@@ -109,9 +109,14 @@
     color: #4F46E5; font-weight: bold;
     border-bottom: 2px solid #4F46E5;
  }
-.tab-content {
-    animation: fadeIn 0.3s ease;
-}
+.tab-content {height: 100vh; overflow-y: auto; scrollbar-width: thin; scrollbar-color: #6570b7 #f8f8f9; position: relative;
+    animation: fadeIn 0.3s ease; }
+/* 3. Chrome, Edge, and Safari Support */
+.tab-content::-webkit-scrollbar { width: 4px; }
+.tab-content::-webkit-scrollbar-track {background: #f8f8f9;  border-radius: 10px;}
+.tab-content::-webkit-scrollbar-thumb { background-color: #94a3b8; border-radius: 10px;  border: 1px solid #f1f5f9;}
+
+
 @keyframes fadeIn {
     from { opacity: 0; }
     to { opacity: 1; }    }
@@ -122,7 +127,7 @@
 <body>
 <div id="sidebar">
     <div class="sidebar-content">
-        <h1>RelationMap v7.4</h1>    
+        <h1>RelationMap v8.0</h1>    
  
    <button id="info-btn" onclick="toggleInfoPopup()" style="
         position: absolute; 
@@ -130,22 +135,6 @@
         border-radius: 50%; background: none; border: none; color: #aaa; font-size: 16px; cursor: pointer; font-weight: bold; z-index: 100;
 display: flex; align-items: center; justify-content: center;line-height: 1; padding: 0; ">ⓘ</button>
 
-    <div id="info-popup" style="
-        display: none;  position: absolute; top: 40px; right: 10px; width: 240px; background: white;  border: 1px solid #ddd;  border-radius: 8px;  padding: 15px; 
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15); 
-        z-index: 101;
-        font-size: 11px;">
-        <h4 style="margin-top:0">About RelationMap</h4>
-        <p style=" font-size:10px; color:#333; font-family: sans-serif;">This tool helps visualize complex human relationships. You can use the Grouping feature to categorize individuals into communities, departments, or organizations so that you can instantly see where different worlds overlap or remain isolated.
-<br> 
-For the connections:<br>
-Dotted line: Frequent interaction or mutual recognition;<br>
-Solid line: Close collaborators, family, or high-trust partnerships;<br>
-Dash line: Almost no interaction or a "neighbor-only" awareness.<br>
-Of course, you can use this mind map-making tool for other purposes. While designed for people, this logic works perfectly for mapping project dependencies, software architectures, or historical events.<br>
-Your map is stored exclusively in your browser’s cache. It will persist even if you close the window, but clearing your browser cache will delete the map. To ensure you never lose a complex network, use the Export to JSON feature. This saves the file directly to your device, allowing you to reload it on any computer. </p>
-        <p style="margin-bottom:0; font-size:9px; color:#666; text-align: right;">Created by HappyGuy119</p>
-    </div>
 
         <input type="text" id="search-input" placeholder="Search & Fly..." oninput="runSearch()">
         <div style="display:flex; gap:4px;">
@@ -216,26 +205,22 @@ Your map is stored exclusively in your browser’s cache. It will persist even i
         <button class="tab-btn" onclick="openTab(event, 'tab-person')">People</button>
         <button class="tab-btn" onclick="openTab(event, 'tab-edge')">Connections</button>
     </div>
-
     <div id="tab-group" class="tab-content" style="display: block;">
 <div id="visibility-list"></div>
     </div>
-
     <div id="tab-person" class="tab-content" style="display: none;">
 <div id="person-list"></div>
     </div>
-
    <div id="tab-edge" class="tab-content" style="display: none;">
 <div id="connection-list"></div>
     </div>
 </div>
-
                 
         <button onclick="exportMermaid()" style="margin-top:20px; font-size:14px; color:#4F46E5; background:none; border:none; text-decoration:underline;">Export Mermaid.md</button>
 
 <div style="display:flex; justify-content: center; padding:10px; border-top:1px solid #eee; margin-top:auto;">
-    <button onclick="openClearModal()" style="width:170px; padding:7px; background:#fee2e2; color:#b91c1c; border:1px solid #fecaca; border-radius:6px; cursor:pointer; font-size:13px; font-weight:550; display:flex; align-items:center; justify-content:center; gap:5px;">
-        🗑️ Clear All
+    <button onclick="openClearModal()" style="width:170px; padding:7px; background: white; color:#b91c1c; border:2px solid #fecaca; border-radius:6px; cursor:pointer; font-size:13px; font-weight:550; display:flex; align-items:center; justify-content:center; gap:5px;">
+     Clear All
     </button>
 </div>
 
@@ -269,6 +254,34 @@ Your map is stored exclusively in your browser’s cache. It will persist even i
             <button onclick="executeClearAll()" style="background:#ef4444; color:white; border:none; padding:8px 15px; border-radius:4px; cursor:pointer; font-weight:bold;">Yes, Clear All</button>
             <button onclick="closeClearModal()" style="background:none; border:none; color:#64748b; cursor:pointer;">Cancel</button>
         </div>
+    </div>
+</div>
+
+<div id="info-popup" style="
+    display: none;  position: fixed; top: 50%;  left: 50%;  transform: translate(-50%, -50%); 
+    width: 90%;  max-width: 650px; max-height: 85vh;
+    background: white;   border: 1px solid #ddd;  border-radius: 12px; 
+    padding: 25px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.2); 
+    z-index: 9999;    font-family: sans-serif;  overflow-y: auto;">
+  <div style="margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; ">
+  <h3 style="margin-top:0; color: #1a1a1a;">About RelationMap</h3>   
+<span style="font-size: 11px; color: #888;">Created by HappyGuy119</span>
+   </div>
+  <div style="font-size: 13px; line-height: 1.6; color: #333;">
+        <p>This tool helps visualize complex human relationships. Start by tapping the <b>“Add Person”</b> button or <b>double-clicking anywhere on the canvas</b> to create a person. Use the <b>Grouping feature</b> to categorize individuals into communities or organizations to see where different worlds overlap or remain isolated.</p>
+<p>Turn on <b>link mode</b> and tap two persons to create a connection.</p>
+        <p style="margin-top: 5px;"><b>Connection Styles:</b></p>
+        <ul style="margin-top: 0; padding-left: 20px;">
+            <li><b>Dotted:</b> Frequent interaction or mutual recognition.</li>
+            <li><b>Solid:</b> Close collaborators, family, or high-trust partnerships.</li>
+            <li><b>Dashed:</b> Almost no interaction or "neighbor-only" awareness.</li>
+        </ul>
+        <p>Of course, you can use this mind map-making tool for <b>other purposes</b>. While designed for people, this logic works perfectly for mapping project dependencies, software architectures, or historical events.</p>
+        <p>Your map is <b>stored exclusively in your browser’s cache</b>. It persists when you close the window, but clearing your cache will delete it. To save your work permanently, use the <b>Export to JSON</b> feature to save a file to your device.</p>
+    </div>
+    <div style="margin-top: 15px; display: flex; justify-content: center; align-items: center; pt: 15px;">
+        <button onclick="document.getElementById('info-popup').style.display='none'" style="width: auto; background: #f3f4f6; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px;">Close</button>        
     </div>
 </div>
 
@@ -400,8 +413,7 @@ cy.nodes('[type="note"]').forEach(n => n.grabbable(false));
         }
         const ele = e.target;
         if(ele.isEdge()) { showEdgeEdit(ele); return; }
-        if(ele.data('type') === 'person') {
-   
+        if(ele.data('type') === 'person') {   
      //adding connection     
        if(connectionMode) {
                 selectedNodes.push(ele.id());
@@ -425,12 +437,46 @@ document.getElementById('connBtn').innerText = `Link Mode: ${connectionMode ? 'O
 function saveData() { const blob = new Blob([JSON.stringify({ elements: cy.elements().map(e=>({group:e.isNode()?'nodes':'edges', data:e.data(), position:e.position()})), groups })], {type: "application/json"}); 
 const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = "map_v6.7.json"; a.click(); }
 //adding of person group     
+cy.on('dblclick', function(event) {
+    // Only trigger if clicking the empty canvas (background)
+    if (event.target === cy) {const pos = event.position;
+        addPersonAt(pos);}
+});
+
+function addPersonAt(pos) {
+    const name = prompt("Name:");
+    if (!name) return;
+    // Use the click position, or default to center of view if pos is null
+    const position = pos || cy.extent().center();
+    const id = 'p' + Date.now();    recordState();
+    const newElements = cy.add([
+        {
+            group: 'nodes',
+            data: { id: id, type: 'person', name: name, color: '#4F46E5', notes: '' },
+            position: { x: position.x, y: position.y }
+        },     {
+            group: 'nodes',
+            data: { id: id + '_n', type: 'note', text: '' },
+            position: { x: position.x, y: position.y + 35 }, 
+            grabbable: false, selectable: false
+        }
+    ]);
+    const personNode = newElements.filter(`[id="${id}"]`);
+    cy.elements().unselect();
+    personNode.select();
+    showPersonEdit(personNode);
+    updatePlist();
+    updateElist();
+}
+
     function addPerson() { const name = prompt("Name:"); 
 if(!name) return; const id='p'+Date.now(); recordState(); 
 const newElements = cy.add([{group:'nodes', data:{id:id, type:'person', name:name, color:'#4F46E5', notes:''}, position:{x:300,y:300}},
 {group:'nodes', data:{id:id+'_n', type:'note', text:''}, 
 Position:{x:300,y:335}, grabbable: false, selectable: false }]); 
 const personNode = newElements.filter(`[id="${id}"]`); 
+ cy.elements().unselect();
+    personNode.select(); showPersonEdit(personNode);
 cy.animate({ center: { eles: personNode }, zoom: 1.0 }, { duration: 500, easing: 'ease-in-out-quint' });
 updatePlist(); updateElist(); }
     
@@ -619,7 +665,7 @@ if (tabName === 'tab-edge') {
     updateElist(); }
 }
 
-    function updateUI() { const list = document.getElementById('visibility-list'); list.innerHTML = ''; Object.keys(groups).forEach(id => { const div = document.createElement('div'); div.className = 'vis-item'; div.innerHTML = `<span onclick="showGroupEdit('${id}'); event.stopPropagation();" style="flex-grow:1; font-weight:700; color:${groups[id].color}">${groups[id].name}</span><span style="font-size:9px; color:#333; text-decoration:underline; font-weight:bold" onclick="toggleVis('${id}'); event.stopPropagation();">${groups[id].visible ? 'HIDE' : 'SHOW'}</span>`; list.appendChild(div); }); 
+    function updateUI() { const list = document.getElementById('visibility-list'); list.innerHTML = ''; Object.keys(groups).forEach(id => { const div = document.createElement('div'); div.className = 'vis-item'; div.innerHTML = `<span onclick="showGroupEdit('${id}'); event.stopPropagation();" style="flex-grow:1; font-weight:700; color:${groups[id].color}">${groups[id].name}</span><span style="font-size:10px; color:#333; text-decoration:underline; font-weight:bold" onclick="toggleVis('${id}'); event.stopPropagation();">${groups[id].visible ? 'HIDE' : 'SHOW'}</span>`; list.appendChild(div); }); 
 }
 
     function toggleVis(id) { recordState(); groups[id].visible = !groups[id].visible; updateUI(); drawGroups(); updateGroupVisbtn();}
@@ -644,7 +690,7 @@ function updatePlist() {
 <span style="width:10px; height:10px; background:${color}; border-radius:50%; margin-right:10px;"></span>
 <span style="${!isVisible ? 'opacity: 0.5;' : ''}">${name}</span>
  </div>
- <span class="toggle-btn" style="font-size:11px; color:#666; text-decoration:underline; font-weight:bold; cursor: pointer; ">${isVisible ? 'HIDE' : 'SHOW'}</span>
+ <span class="toggle-btn" style="padding-right: 5px; font-size:10px; color:#444; text-decoration:underline; font-weight:bold; cursor: pointer; ">${isVisible ? 'HIDE' : 'SHOW'}</span>
         `;
     // 4. Make it interactive: clicking the name selects them on the map
         li.onclick = () => {
@@ -757,4 +803,3 @@ window.addEventListener('keydown', (e) => {
 </script>
 </body>
 </html>
-
