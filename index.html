@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RelationMap v7.1</title>
+    <title>RelationMap v7.4</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.26.0/cytoscape.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/webcola@3.4.0/WebCola/cola.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/cytoscape-cola@2.5.1/cytoscape-cola.min.js"></script>
@@ -114,8 +114,7 @@
 }
 @keyframes fadeIn {
     from { opacity: 0; }
-    to { opacity: 1; }
-}
+    to { opacity: 1; }    }
 
     </style>
 </head>
@@ -123,12 +122,12 @@
 <body>
 <div id="sidebar">
     <div class="sidebar-content">
-        <h1>RelationMap v7.1</h1>    
+        <h1>RelationMap v7.4</h1>    
  
    <button id="info-btn" onclick="toggleInfoPopup()" style="
         position: absolute; 
         top: 10px; right: 10px; width: 20px; height: 20px; 
-        border-radius: 50%; background: none; color: #aaa; font-size: 16px; cursor: pointer; font-weight: bold; z-index: 100;
+        border-radius: 50%; background: none; border: none; color: #aaa; font-size: 16px; cursor: pointer; font-weight: bold; z-index: 100;
 display: flex; align-items: center; justify-content: center;line-height: 1; padding: 0; ">ⓘ</button>
 
     <div id="info-popup" style="
@@ -137,13 +136,14 @@ display: flex; align-items: center; justify-content: center;line-height: 1; padd
         z-index: 101;
         font-size: 11px;">
         <h4 style="margin-top:0">About RelationMap</h4>
-        <p style=" font-size:10px; color:#333; font-family: sans-serif;">This tool helps visualize complex human relationships. The grouping feature can be used to show the community/organisation each person belongs to.<br> 
+        <p style=" font-size:10px; color:#333; font-family: sans-serif;">This tool helps visualize complex human relationships. You can use the Grouping feature to categorize individuals into communities, departments, or organizations so that you can instantly see where different worlds overlap or remain isolated.
+<br> 
 For the connections:<br>
-Dotted line: knowing/recognising each other & had/have interactions;<br>
-Solid line: very close relationship;<br>
-Dash line: not knowing each other / almost no interaction.<br>
-Of course you can use this mind map making tool for other purposes.<br>
-Your map will be stored temporarily in your own browser. So, don’t worry about losing your map when closing the browser (unless you are going to delete the cache). Export it as a JSON file to save your work into your device. </p>
+Dotted line: Frequent interaction or mutual recognition;<br>
+Solid line: Close collaborators, family, or high-trust partnerships;<br>
+Dash line: Almost no interaction or a "neighbor-only" awareness.<br>
+Of course, you can use this mind map-making tool for other purposes. While designed for people, this logic works perfectly for mapping project dependencies, software architectures, or historical events.<br>
+Your map is stored exclusively in your browser’s cache. It will persist even if you close the window, but clearing your browser cache will delete the map. To ensure you never lose a complex network, use the Export to JSON feature. This saves the file directly to your device, allowing you to reload it on any computer. </p>
         <p style="margin-bottom:0; font-size:9px; color:#666; text-align: right;">Created by HappyGuy119</p>
     </div>
 
@@ -174,14 +174,14 @@ Your map will be stored temporarily in your own browser. So, don’t worry about
 
 
         <div id="edge-panel" class="panel" style=" background:#fff7ed;">
-            <input type="text" id="edge-label-input" oninput="updateEdgeLabel()" placeholder="Relationship">
 <div style="display:flex; justify-content: center; margin-top:5px;">
   <div id="edge-participants" style="width: atuo; padding: 8px; background: #f8fafc; border-radius: 6px; border: 1px solid #e2e8f0; font-size: 13px; display: flex; align-items: center; justify-content: space-between;"> 
-     <span id="edge-source-name" style="font-weight: 600; color: #443b60;"></span> 
+     <button id="edge-source-name" style="background: none; border: none; padding: 0; white-space:nowrap; cursor: pointer; font-weight: 500; color: #443b60;"></button> 
      <span style="color: #94a3b8;">&nbsp──&nbsp</span> 
-     <span id="edge-target-name" style="font-weight: 600; color: #443b60;"></span> 
+     <button id="edge-target-name" style="background: none; border: none; padding: 0; white-space:nowrap; cursor: pointer; font-weight: 500; color: #443b60;"></button> 
   </div> 
 </div>
+            <input type="text" id="edge-label-input" oninput="updateEdgeLabel()" placeholder="Relationship">
             <textarea id="edge-notes"  oninput="updateEdgeNotes()" style="height:60px;" placeholder="Notes"></textarea>
             <div id="edge-style-container" style="display:grid; grid-template-columns: repeat(3, 1fr); gap:4px;">      
             </div>
@@ -231,7 +231,14 @@ Your map will be stored temporarily in your own browser. So, don’t worry about
 </div>
 
                 
-        <button onclick="exportMermaid()" style="margin-top:20px; font-size:10px; color:#4F46E5; background:none; border:none; text-decoration:underline;">Export Mermaid.md</button>
+        <button onclick="exportMermaid()" style="margin-top:20px; font-size:14px; color:#4F46E5; background:none; border:none; text-decoration:underline;">Export Mermaid.md</button>
+
+<div style="display:flex; justify-content: center; padding:10px; border-top:1px solid #eee; margin-top:auto;">
+    <button onclick="openClearModal()" style="width:170px; padding:7px; background:#fee2e2; color:#b91c1c; border:1px solid #fecaca; border-radius:6px; cursor:pointer; font-size:13px; font-weight:550; display:flex; align-items:center; justify-content:center; gap:5px;">
+        🗑️ Clear All
+    </button>
+</div>
+
     </div>
 </div>
 
@@ -248,8 +255,25 @@ Your map will be stored temporarily in your own browser. So, don’t worry about
     </div>
 </div>
 
+<div id="clear-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:9999; align-items:center; justify-content:center;">
+    <div style="background:white; padding:20px; border-radius:8px; width:320px; box-shadow: 0 10px 25px rgba(0,0,0,0.2);">
+        <h3 style="margin-top:0; margin-bottom: 10px; color:#ef4444;">Clear All Data?</h3>
+        <p style="font-size:14px; color:#64748b;">This will permanently delete all people, connections, and groups.</p>
+        
+        <label style="display:flex; align-items:center; white-space:nowrap; margin-bottom: 17px; margin-top: 17px; font-size:13px; cursor:pointer; color:#334155;">
+            <input type="checkbox" id="backup-checkbox" checked style="margin-right:8px; height:16px; width:16px; " >
+            Create JSON backup before clearing
+        </label>
+
+        <div style="display:flex; justify-content:flex-end; gap:10px;">
+            <button onclick="executeClearAll()" style="background:#ef4444; color:white; border:none; padding:8px 15px; border-radius:4px; cursor:pointer; font-weight:bold;">Yes, Clear All</button>
+            <button onclick="closeClearModal()" style="background:none; border:none; color:#64748b; cursor:pointer;">Cancel</button>
+        </div>
+    </div>
+</div>
+
 <script>
-    function toggleSidebar() {
+ function toggleSidebar() {
         const sidebar = document.getElementById('sidebar');
         const tab = document.getElementById('toggle-tab');
         sidebar.classList.toggle('collapsed');
@@ -276,6 +300,9 @@ function closePopupOnClickOutside(event) {
 
 let activePersonNode = null;
     let connectionMode = false, selectedNodes = [], history = [], groups = {}, activeGroupId = null;
+let currentPanel = null;
+let activeEdge = null;
+
     let groupOrder = []; 
     const canvas = document.getElementById('overlay-canvas');
     const ctx = canvas.getContext('2d');
@@ -378,7 +405,7 @@ cy.nodes('[type="note"]').forEach(n => n.grabbable(false));
      //adding connection     
        if(connectionMode) {
                 selectedNodes.push(ele.id());
-                if(selectedNodes.length === 2) { recordState(); cy.add({group:'edges', data:{id:ed, source:selectedNodes[0], target:selectedNodes[1], arrow:'triangle', sArrow:'none', lineStyle:'dotted', label:'', notes:''}}); toggleConnectionMode(); }
+                if(selectedNodes.length === 2) { recordState(); cy.add({group:'edges', data:{ source:selectedNodes[0], target:selectedNodes[1], arrow:'triangle', sArrow:'none', lineStyle:'dotted', label:'', notes:''}}); toggleConnectionMode(); }
             } else { showPersonEdit(ele); }; updateElist();
         }
     });
@@ -393,7 +420,7 @@ document.getElementById('connBtn').innerText = `Link Mode: ${connectionMode ? 'O
 
     function runSearch() { const term = document.getElementById('search-input').value.toLowerCase(); cy.nodes().removeClass('highlighted'); if (term) { const targets = cy.nodes('[type="person"]').filter(n => n.data('name').toLowerCase().includes(term)); targets.addClass('highlighted'); cy.animate({ center: { eles: targets }, zoom: 1.0 }, { duration: 500 }); } }
     
-    function loadData(ev) { const reader = new FileReader(); reader.onload = (e) => { const data = JSON.parse(e.target.result); cy.elements().remove(); cy.add(data.elements || (data.cy && data.cy.elements) || []); groups = data.groups || {}; groupOrder = Object.keys(groups); updateUI(); updatePlist();  updateElist(); syncNotes(); drawGroups(); }; reader.readAsText(ev.target.files[0]); }
+    function loadData(ev) { recordState(); const reader = new FileReader(); reader.onload = (e) => { const data = JSON.parse(e.target.result); cy.elements().remove(); cy.add(data.elements || (data.cy && data.cy.elements) || []); groups = data.groups || {}; groupOrder = Object.keys(groups); updateUI(); updatePlist();  updateElist(); syncNotes(); drawGroups(); }; reader.readAsText(ev.target.files[0]); }
     
 function saveData() { const blob = new Blob([JSON.stringify({ elements: cy.elements().map(e=>({group:e.isNode()?'nodes':'edges', data:e.data(), position:e.position()})), groups })], {type: "application/json"}); 
 const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = "map_v6.7.json"; a.click(); }
@@ -415,7 +442,7 @@ if (document.getElementById('edit-panel').style.display === 'block' && activePer
 }
 //Person edit 
     function showPersonEdit(node) { activePersonNode = node;
-        hidePanels(); document.getElementById('edit-panel').style.display='block'; 
+        hidePanels();  currentPanel = 'person'; document.getElementById('edit-panel').style.display='block'; 
         document.getElementById('edit-node-name').value = node.data('name'); 
         document.getElementById('node-notes').value = node.data('notes')||''; 
         const picker = document.getElementById('node-color-picker'); picker.innerHTML=''; 
@@ -453,7 +480,7 @@ const initialLabel = fullVal.length > 10 ? fullVal.substring(0, 10) + "..." : fu
  //Connection edit 
 function showEdgeEdit(edge) {
     hidePanels();
-    activeEdge = edge;
+    activeEdge = edge; currentPanel = 'edge';
     document.getElementById('edge-panel').style.display = 'block';
     // Sync Inputs
     document.getElementById('edge-label-input').value = edge.data('label') || '';
@@ -461,13 +488,21 @@ function showEdgeEdit(edge) {
     // Sync Names & Opacity
     const sourceNode = edge.source();
     const targetNode = edge.target();
-    const sourceSpan = document.getElementById('edge-source-name');
-    const targetSpan = document.getElementById('edge-target-name');  
-    sourceSpan.innerText = sourceNode.data('name');
-    targetSpan.innerText = targetNode.data('name');
-    sourceSpan.style.opacity = sourceNode.visible() ? "1" : "0.5";
-    targetSpan.style.opacity = targetNode.visible() ? "1" : "0.5";
-    // --- Generate Style Buttons ---
+    const sourceBtn = document.getElementById('edge-source-name');
+    const targetBtn = document.getElementById('edge-target-name');  
+    sourceBtn.innerText = sourceNode.data('name');
+    targetBtn.innerText = targetNode.data('name');
+    sourceBtn.style.opacity = sourceNode.visible() ? "1" : "0.5";
+    targetBtn.style.opacity = targetNode.visible() ? "1" : "0.5";
+// --- NAVIGATION LOGIC --- 
+sourceBtn.onclick = () => {
+if (sourceNode.visible()) 
+{ cy.elements().unselect();      sourceNode.select(); cy.animate({ center: { eles: sourceNode }, zoom: 1.5 }, { duration: 300 }); } showPersonEdit(sourceNode); }; 
+targetBtn.onclick = () => { 
+if (targetNode.visible()) 
+{ cy.elements().unselect();     targetNode.select(); cy.animate({ center: { eles: targetNode }, zoom: 1.5 }, { duration: 300 }); } 
+showPersonEdit(targetNode); }; 
+ // --- Generate Style Buttons ---
     const styleCont = document.getElementById('edge-style-container');
     styleCont.innerHTML = '';
     const styles = [
@@ -522,7 +557,8 @@ e.data('sArrow', (dir==='backward'||dir==='both'?'triangle':'none')); updateElis
 
   //Group edit    
     function showGroupEdit(id) { 
-        hidePanels(); activeGroupId = id; document.getElementById('group-edit-panel').style.display = 'block'; 
+        hidePanels(); activeGroupId = id; currentPanel = 'group';
+document.getElementById('group-edit-panel').style.display = 'block'; 
         document.getElementById('group-name-input').value = groups[id].name; 
 document.getElementById('group-notes').value = groups[id].notes ||'';
         const picker = document.getElementById('group-color-picker'); picker.innerHTML=''; 
@@ -561,12 +597,12 @@ const visBtn = document.getElementById('group-vis-toggle'); visBtn.innerText = g
   function updateGroupName() { if(activeGroupId) { groups[activeGroupId].name = document.getElementById('group-name-input').value; updateUI(); drawGroups(); } }
   function updateGroupNotes() { if(activeGroupId) { groups[activeGroupId].notes = document.getElementById('group-notes').value;  updateUI(); drawGroups(); } }
 //delete function
-  function deleteGroup() { if(activeGroupId && confirm("Delete group?")) { delete groups[activeGroupId]; groupOrder = groupOrder.filter(id => id !== activeGroupId); hidePanels(); updateUI(); drawGroups(); } }
+  function deleteGroup() {recordState(); if(activeGroupId && confirm("Delete group?")) { delete groups[activeGroupId]; groupOrder = groupOrder.filter(id => id !== activeGroupId); hidePanels(); updateUI(); drawGroups(); } }
    
   function deleteSelected() { recordState(); cy.$(':selected').forEach(e=>{ if(e.data('type')==='person') cy.getElementById(e.id()+'_n').remove(); e.remove(); }); hidePanels(); updateUI(); updatePlist(); updateElist();}
 
 
- function hidePanels() { document.querySelectorAll('.panel').forEach(p=>p.style.display='none'); cy.nodes().removeClass('highlighted'); }   
+ function hidePanels() { document.querySelectorAll('.panel').forEach(p=>p.style.display='none'); cy.nodes().removeClass('highlighted'); currentPanel = null;}   
     
 //The Lists-tabs
 function openTab(evt, tabName) {
@@ -632,14 +668,15 @@ function togglePersonListVis(id) {
     } else {
    person.show();
    if (note.length) note.show();    }
-    updatePlist(); updateElist();
-    if (activePersonNode && activePersonNode.id() === id) {
-        showPersonEdit(person);}
-if (activeEdge) { 
-const sourceId = activeEdge.source().id(); 
-const targetId = activeEdge.target().id();
- if (id === sourceId || id === targetId) { showEdgeEdit(activeEdge); } }
-}
+    updatePlist(); updateElist(); updateUI();
+// REFRESH LOGIC: Only refresh the panel the user is actually looking at
+ if (currentPanel === 'person' && activePersonNode && activePersonNode.id() === id) 
+{ showPersonEdit(person); } 
+else if (currentPanel === 'edge' && activeEdge) 
+{ const sId = activeEdge.source().id(); const tId = activeEdge.target().id(); if (id === sId || id === tId) { showEdgeEdit(activeEdge); } } 
+else if (currentPanel === 'group' && activeGroupId) { 
+// If the group panel shows a list of members, refresh it here 
+showGroupEdit(activeGroupId); } }
 
  function updateElist() {
     const linklist = document.getElementById('connection-list');
@@ -684,6 +721,28 @@ function runAutoLayout() { cy.layout({ name: 'cola', infinite: false, fit: true,
   
   function exportMermaid() { let m = "flowchart LR\n"; cy.nodes('[type="person"]').forEach(n => { m += `    ${n.id()}["${n.data('name')}"]\n`; }); cy.edges().forEach(e => { let arrow = (e.data('arrow') !== 'none' && e.data('sArrow') !== 'none') ? "<-->" : (e.data('arrow') !== 'none' ? "-->" : (e.data('sArrow') !== 'none' ? "<--" : "---")); m += `    ${e.source().id()} ${arrow} ${e.target().id()}\n`; }); Object.keys(groups).forEach(id => { if(groups[id].members.length > 0) m += `    subgraph ${id}["${groups[id].name}"]\n        ${groups[id].members.join('\n        ')}\n    end\n`; }); const blob = new Blob([m], {type: "text/plain"}); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = "mermaid.md"; a.click(); }
 
+// Clear all
+function openClearModal() {
+    document.getElementById('clear-modal').style.display = 'flex';}
+
+function closeClearModal() {
+    document.getElementById('clear-modal').style.display = 'none';}
+
+function executeClearAll() {
+    const shouldBackup = document.getElementById('backup-checkbox').checked;
+    if (shouldBackup) {  saveData();}
+    cy.elements().remove();
+    for (let key in groups) delete groups[key]; 
+   activePersonNode = null; activeEdge = null; activeGroupId = null; currentPanel = null; 
+    hidePanels();  updatePlist();    updateElist();
+    if (typeof updateUI === 'function') updateUI();
+    closeClearModal();
+    if (typeof recordState === 'function') recordState();
+}
+
+window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && document.getElementById('clear-modal').style.display === 'flex') {closeClearModal();}
+});
 
     window.onload = () => {
         const saved = localStorage.getItem('relationMap_v56_autosave');
