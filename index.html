@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RelationMap v8.0</title>
+    <title>RelationMap v8.1</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.26.0/cytoscape.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/webcola@3.4.0/WebCola/cola.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/cytoscape-cola@2.5.1/cytoscape-cola.min.js"></script>
@@ -127,7 +127,7 @@
 <body>
 <div id="sidebar">
     <div class="sidebar-content">
-        <h1>RelationMap v8.0</h1>    
+        <h1>RelationMap v8.1</h1>    
  
    <button id="info-btn" onclick="toggleInfoPopup()" style="
         position: absolute; 
@@ -329,7 +329,7 @@ style: { 'width': 60, 'height': 60, 'background-color': 'data(color)', 'label': 
             { selector: 'node[type="note"]', style: { 'width': 60, 'height': 10, 'shape': 'rectangle', 'label': 'data(text)', 'font-size': '10px', 'color': '#64748b', 'text-valign': 'center', 'text-halign': 'center', 'background-opacity': 0, 'z-index': 10 }},
             { selector: 'edge', style: { 'width': 2, 'line-color': '#94a3b8', 'curve-style': 'bezier', 'target-arrow-shape': 'data(arrow)', 'source-arrow-shape': 'data(sArrow)', 'line-style': 'data(lineStyle)', 'label': 'data(label)', 'font-size': '10px', 'edge-text-rotation': 'autorotate', 'text-margin-y': -10, 'text-background-opacity': 0 }},
 
-            { selector: ':selected', style: { 'border-width': 4, 'border-color': '#fbbf24' }},
+            { selector: ':selected', style: { 'border-width': 4, 'border-color': '#00ff00' }},
             { selector: '.highlighted', style: { 'border-width': 6, 'border-color': '#fff400' }}
         ]
     });
@@ -417,8 +417,8 @@ cy.nodes('[type="note"]').forEach(n => n.grabbable(false));
      //adding connection     
        if(connectionMode) {
                 selectedNodes.push(ele.id());
-                if(selectedNodes.length === 2) { recordState(); cy.add({group:'edges', data:{ source:selectedNodes[0], target:selectedNodes[1], arrow:'triangle', sArrow:'none', lineStyle:'dotted', label:'', notes:''}}); toggleConnectionMode(); }
-            } else { showPersonEdit(ele); }; updateElist();
+                if(selectedNodes.length === 2) { recordState(); const newEdge = cy.add({group:'edges', data:{ source:selectedNodes[0], target:selectedNodes[1], arrow:'triangle', sArrow:'none', lineStyle:'dotted', label:'', notes:''}}); toggleConnectionMode(); updateElist(); showEdgeEdit(newEdge[0]);}
+            } else { showPersonEdit(ele); }; 
         }
     });
 
@@ -435,7 +435,7 @@ document.getElementById('connBtn').innerText = `Link Mode: ${connectionMode ? 'O
     function loadData(ev) { recordState(); const reader = new FileReader(); reader.onload = (e) => { const data = JSON.parse(e.target.result); cy.elements().remove(); cy.add(data.elements || (data.cy && data.cy.elements) || []); groups = data.groups || {}; groupOrder = Object.keys(groups); updateUI(); updatePlist();  updateElist(); syncNotes(); drawGroups(); }; reader.readAsText(ev.target.files[0]); }
     
 function saveData() { const blob = new Blob([JSON.stringify({ elements: cy.elements().map(e=>({group:e.isNode()?'nodes':'edges', data:e.data(), position:e.position()})), groups })], {type: "application/json"}); 
-const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = "map_v6.7.json"; a.click(); }
+const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = "mymap_v8.1.json"; a.click(); }
 //adding of person group     
 cy.on('dblclick', function(event) {
     // Only trigger if clicking the empty canvas (background)
@@ -484,11 +484,12 @@ function addGroup() { const name = prompt("Group Name:");
 if(!name) return; const id='g'+Date.now(); recordState(); 
 groups[id] = {name:name, members:[], visible:true, color:palette[Object.keys(groups).length % palette.length]}; groupOrder.push(id); updateUI(); 
 if (document.getElementById('edit-panel').style.display === 'block' && activePersonNode) 
-{ showPersonEdit(activePersonNode);} 
+{ showPersonEdit(activePersonNode);} else {showGroupEdit(id);}
 }
 //Person edit 
     function showPersonEdit(node) { activePersonNode = node;
         hidePanels();  currentPanel = 'person'; document.getElementById('edit-panel').style.display='block'; 
+recordState();
         document.getElementById('edit-node-name').value = node.data('name'); 
         document.getElementById('node-notes').value = node.data('notes')||''; 
         const picker = document.getElementById('node-color-picker'); picker.innerHTML=''; 
@@ -512,6 +513,7 @@ function updateNodeName() { const n = cy.$(':selected')[0]; if(n) n.data('name',
     
 function updateNotes() { 
     const n = cy.$(':selected')[0]; 
+recordState();
     if(!n) return;
     const fullVal = document.getElementById('node-notes').value;
     n.data('notes', fullVal); // Save to Person
@@ -528,6 +530,7 @@ function showEdgeEdit(edge) {
     hidePanels();
     activeEdge = edge; currentPanel = 'edge';
     document.getElementById('edge-panel').style.display = 'block';
+recordState();
     // Sync Inputs
     document.getElementById('edge-label-input').value = edge.data('label') || '';
     document.getElementById('edge-notes').value = edge.data('notes') || '';
@@ -605,6 +608,7 @@ e.data('sArrow', (dir==='backward'||dir==='both'?'triangle':'none')); updateElis
     function showGroupEdit(id) { 
         hidePanels(); activeGroupId = id; currentPanel = 'group';
 document.getElementById('group-edit-panel').style.display = 'block'; 
+recordState();
         document.getElementById('group-name-input').value = groups[id].name; 
 document.getElementById('group-notes').value = groups[id].notes ||'';
         const picker = document.getElementById('group-color-picker'); picker.innerHTML=''; 
@@ -643,10 +647,23 @@ const visBtn = document.getElementById('group-vis-toggle'); visBtn.innerText = g
   function updateGroupName() { if(activeGroupId) { groups[activeGroupId].name = document.getElementById('group-name-input').value; updateUI(); drawGroups(); } }
   function updateGroupNotes() { if(activeGroupId) { groups[activeGroupId].notes = document.getElementById('group-notes').value;  updateUI(); drawGroups(); } }
 //delete function
-  function deleteGroup() {recordState(); if(activeGroupId && confirm("Delete group?")) { delete groups[activeGroupId]; groupOrder = groupOrder.filter(id => id !== activeGroupId); hidePanels(); updateUI(); drawGroups(); } }
+  function deleteGroup() {recordState(); if(activeGroupId) { delete groups[activeGroupId]; groupOrder = groupOrder.filter(id => id !== activeGroupId); hidePanels(); updateUI(); drawGroups(); } }
    
-  function deleteSelected() { recordState(); cy.$(':selected').forEach(e=>{ if(e.data('type')==='person') cy.getElementById(e.id()+'_n').remove(); e.remove(); }); hidePanels(); updateUI(); updatePlist(); updateElist();}
-
+function deleteSelected() {
+    let target = null;
+    if (currentPanel === 'edge' && activeEdge) {target = activeEdge;
+    } else if (currentPanel === 'person' && activePersonNode) { target = activePersonNode;
+    } else {target = cy.$(':selected'); if (target.length === 0) return;
+    }    recordState();
+    if (target === activePersonNode || (target.isNode && target.isNode())) {
+        const nodesToDelete = target.isNode ? target : cy.collection([target]);
+        nodesToDelete.forEach(n => {
+            const note = cy.getElementById(n.id() + '_n');
+            if (note.length) note.remove();
+            n.remove();  });
+    } else {
+        target.remove(); }
+    hidePanels(); updateUI();  updatePlist();  updateElist();}
 
  function hidePanels() { document.querySelectorAll('.panel').forEach(p=>p.style.display='none'); cy.nodes().removeClass('highlighted'); currentPanel = null;}   
     
@@ -788,6 +805,12 @@ function executeClearAll() {
 
 window.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && document.getElementById('clear-modal').style.display === 'flex') {closeClearModal();}
+});
+window.addEventListener('keydown', (e) => {
+        if (e.key === 'Delete') {
+        if (['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
+        deleteSelected();
+    }
 });
 
     window.onload = () => {
