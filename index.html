@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RelationMap v8.1</title>
+    <title>RelationMap v8.3</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.26.0/cytoscape.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/webcola@3.4.0/WebCola/cola.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/cytoscape-cola@2.5.1/cytoscape-cola.min.js"></script>
@@ -127,7 +127,7 @@
 <body>
 <div id="sidebar">
     <div class="sidebar-content">
-        <h1>RelationMap v8.1</h1>    
+        <h1>RelationMap v8.3</h1>    
  
    <button id="info-btn" onclick="toggleInfoPopup()" style="
         position: absolute; 
@@ -152,7 +152,7 @@ display: flex; align-items: center; justify-content: center;line-height: 1; padd
 
         <div id="edit-panel" class="panel">
             <input type="text" id="edit-node-name" oninput="updateNodeName()" placeholder="Name">
-            <textarea id="node-notes" oninput="updateNotes()" style="height:60px;" placeholder="Notes"></textarea>
+            <textarea id="node-notes" onfocus="updateNotes()" oninput="updateNotes()" style="height:60px;" placeholder="Notes"></textarea>
             <div class="color-row" id="node-color-picker"></div>
             <div id="group-tags-container"></div>
 <div style="display:flex; justify-content: center; margin-top:5px;">
@@ -312,7 +312,7 @@ function closePopupOnClickOutside(event) {
     }}
 
 let activePersonNode = null;
-    let connectionMode = false, selectedNodes = [], history = [], groups = {}, activeGroupId = null;
+    let connectionMode = false, selectedNodes = [], history = [], groups = {}, activeGroupId = null; 
 let currentPanel = null;
 let activeEdge = null;
 
@@ -435,13 +435,12 @@ document.getElementById('connBtn').innerText = `Link Mode: ${connectionMode ? 'O
     function loadData(ev) { recordState(); const reader = new FileReader(); reader.onload = (e) => { const data = JSON.parse(e.target.result); cy.elements().remove(); cy.add(data.elements || (data.cy && data.cy.elements) || []); groups = data.groups || {}; groupOrder = Object.keys(groups); updateUI(); updatePlist();  updateElist(); syncNotes(); drawGroups(); }; reader.readAsText(ev.target.files[0]); }
     
 function saveData() { const blob = new Blob([JSON.stringify({ elements: cy.elements().map(e=>({group:e.isNode()?'nodes':'edges', data:e.data(), position:e.position()})), groups })], {type: "application/json"}); 
-const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = "mymap_v8.1.json"; a.click(); }
+const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = "mymap_v8.3.json"; a.click(); }
 //adding of person group     
 cy.on('dblclick', function(event) {
     // Only trigger if clicking the empty canvas (background)
     if (event.target === cy) {const pos = event.position;
-        addPersonAt(pos);}
-});
+        addPersonAt(pos);} });
 
 function addPersonAt(pos) {
     const name = prompt("Name:");
@@ -449,7 +448,7 @@ function addPersonAt(pos) {
     // Use the click position, or default to center of view if pos is null
     const position = pos || cy.extent().center();
     const id = 'p' + Date.now();    recordState();
-    const newElements = cy.add([
+cy.add([
         {
             group: 'nodes',
             data: { id: id, type: 'person', name: name, color: '#4F46E5', notes: '' },
@@ -461,13 +460,14 @@ function addPersonAt(pos) {
             grabbable: false, selectable: false
         }
     ]);
-    const personNode = newElements.filter(`[id="${id}"]`);
+    const personNode = cy.getElementById(id);
     cy.elements().unselect();
-    personNode.select();
-    showPersonEdit(personNode);
+       showPersonEdit(personNode);
     updatePlist();
     updateElist();
+ personNode.select();
 }
+
 
     function addPerson() { const name = prompt("Name:"); 
 if(!name) return; const id='p'+Date.now(); recordState(); 
@@ -489,10 +489,9 @@ if (document.getElementById('edit-panel').style.display === 'block' && activePer
 //Person edit 
     function showPersonEdit(node) { activePersonNode = node;
         hidePanels();  currentPanel = 'person'; document.getElementById('edit-panel').style.display='block'; 
-recordState();
         document.getElementById('edit-node-name').value = node.data('name'); 
-        document.getElementById('node-notes').value = node.data('notes')||''; 
-        const picker = document.getElementById('node-color-picker'); picker.innerHTML=''; 
+const notesArea = document.getElementById('node-notes'); notesArea.value = node.data('notes') || '';
+               const picker = document.getElementById('node-color-picker'); picker.innerHTML=''; 
         palette.forEach(c=>{ const d=document.createElement('div'); d.className=`color-dot ${node.data('color')===c?'active':''}`; d.style.backgroundColor=c; d.onclick=()=>{recordState(); node.data('color',c); showPersonEdit(node); updatePlist();  updateElist();}; picker.appendChild(d); }); 
         const container = document.getElementById('group-tags-container'); container.innerHTML=''; 
 const visBtn = document.getElementById('person-vis-toggle'); visBtn.innerText = node.visible() ? 'Hide Person' : 'Show Person'; 
@@ -509,22 +508,20 @@ function togglePersonVis() {
     } else { person.show();
         if (note.length) note.show(); }    document.getElementById('person-vis-toggle').innerText = person.visible() ? 'Hide Person' : 'Show Person'; updatePlist(); updateElist();}
 
-function updateNodeName() { const n = cy.$(':selected')[0]; if(n) n.data('name', document.getElementById('edit-node-name').value); updatePlist();  updateElist();}
+function updateNodeName() { recordState(); const n = activePersonNode; if(n) n.data('name', document.getElementById('edit-node-name').value); updatePlist();  updateElist();}
     
 function updateNotes() { 
-    const n = cy.$(':selected')[0]; 
-recordState();
-    if(!n) return;
-    const fullVal = document.getElementById('node-notes').value;
-    n.data('notes', fullVal); // Save to Person
+    const n = activePersonNode; recordState();
+ if(n) {
+const fullVal = document.getElementById('node-notes').value;
+        n.data('notes', fullVal); // Save to Person
     const noteElement = cy.getElementById(n.id() + '_n');
     if(noteElement.length > 0) {
         noteElement.data('fullText', fullVal);
 const initialLabel = fullVal.length > 10 ? fullVal.substring(0, 10) + "..." : fullVal;
         noteElement.data('text', initialLabel);
-    }
+    };}
 }
-
  //Connection edit 
 function showEdgeEdit(edge) {
     hidePanels();
@@ -580,8 +577,7 @@ showPersonEdit(targetNode); };
     ];
     dirs.forEach(d => {
         const btn = document.createElement('button');
-        btn.innerText = d.label;
-        
+        btn.innerText = d.label;      
         let isSel = false;
         if (d.id === 'none') isSel = !curF && !curB;
         else if (d.id === 'forward') isSel = curF && !curB;
@@ -596,8 +592,9 @@ showPersonEdit(targetNode); };
 
 function updateEdgeLabel() {  if(activeEdge) {
         activeEdge.data('label', document.getElementById('edge-label-input').value); 
-        updateElist();    }}
-  function updateEdgeNotes() { const e = cy.$(':selected')[0]; if(e && e.isEdge()) e.data('notes', document.getElementById('edge-notes').value); recordState();}
+        updateElist();   recordState(); }}
+  function updateEdgeNotes() {  if(activeEdge) {
+ activeEdge.data('notes', document.getElementById('edge-notes').value); recordState();}}
 
     function setEdgeStyle(s) { const e = cy.$(':selected'); if(e.isEdge()) e.data('lineStyle', s); updateElist();}
     function setEdgeArrow(dir) { const e = cy.$(':selected'); if(e.isEdge()) { 
