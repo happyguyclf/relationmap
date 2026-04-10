@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RelationMap v8.3</title>
+    <title>RelationMap v8.5</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.26.0/cytoscape.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/webcola@3.4.0/WebCola/cola.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/cytoscape-cola@2.5.1/cytoscape-cola.min.js"></script>
@@ -127,7 +127,7 @@
 <body>
 <div id="sidebar">
     <div class="sidebar-content">
-        <h1>RelationMap v8.3</h1>    
+        <h1>RelationMap v8.5</h1>    
  
    <button id="info-btn" onclick="toggleInfoPopup()" style="
         position: absolute; 
@@ -333,13 +333,58 @@ style: { 'width': 60, 'height': 60, 'background-color': 'data(color)', 'label': 
             { selector: '.highlighted', style: { 'border-width': 6, 'border-color': '#fff400' }}
         ]
     });
-
+//data management
     function autoSave() {
         const data = { elements: cy.elements().map(e=>({group:e.isNode()?'nodes':'edges', data:e.data(), position:e.position()})), groups, groupOrder };
-        localStorage.setItem('relationMap_v56_autosave', JSON.stringify(data));
+const jsonString = JSON.stringify(data);
+        localStorage.setItem('relationMap_v56_autosave', jsonString);
         document.getElementById('save-status').innerText = "✓ Saved " + new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+if (window.ToFlutterState) { window.ToFlutterState.postMessage(jsonString); }
     }
     cy.on('position dragfree add remove data', autoSave);
+
+    function loadData(ev) { recordState(); const reader = new FileReader(); reader.onload = (e) => { const data = JSON.parse(e.target.result); cy.elements().remove(); cy.add(data.elements || (data.cy && data.cy.elements) || []); groups = data.groups || {}; groupOrder = Object.keys(groups); updateUI(); updatePlist();  updateElist(); syncNotes(); drawGroups(); }; reader.readAsText(ev.target.files[0]); }
+    
+function saveData() { 
+    const dataString = JSON.stringify({ 
+        elements: cy.elements().map(e=>({group:e.isNode()?'nodes':'edges', data:e.data(), position:e.position()})), 
+        groups  });
+    if (window.ToFlutterShare) {
+        window.ToFlutterShare.postMessage(dataString);
+      } else{
+    // Normal Browser Download Logic
+    const blob = new Blob([dataString], {type: "application/json"}); 
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `mymap_${new Date().getTime()}.json`;
+    a.click();}
+}
+
+// Function for Flutter to call to inject saved file data
+function loadFromMobile(jsonString) {
+    if(!jsonString) return;
+    const data = JSON.parse(jsonString);    
+    recordState(); 
+    cy.elements().remove();
+    cy.add(data.elements);
+    groups = data.groups || {};
+    groupOrder = data.groupOrder || Object.keys(groups);    
+    updateUI(); syncNotes(); drawGroups(); updatePlist(); updateElist();
+}
+// Keep your existing window.onload for normal browsers
+window.onload = () => {
+    const saved = localStorage.getItem('relationMap_v56_autosave');
+    if(saved) {
+        loadFromMobile(saved); 
+    }
+};
+
+
+function runAutoLayout() { cy.layout({ name: 'cola', infinite: false, fit: true, padding: 50, nodeSpacing: 100 }).run(); }
+
+    function recordState() { history.push(JSON.stringify({ elements: cy.elements().map(e=>({group:e.isNode()?'nodes':'edges', data:e.data(), position:e.position()})), groups })); if(history.length > 20) history.shift(); }
+  
+  function undo() { if(history.length) { const s = JSON.parse(history.pop()); cy.elements().remove(); cy.add(s.elements); groups = s.groups; groupOrder = Object.keys(groups); updateUI(); syncNotes(); drawGroups(); updatePlist();  updateElist(); } }
 
 //drawing group
     function getConvexHull(points) {
@@ -432,10 +477,6 @@ document.getElementById('connBtn').innerText = `Link Mode: ${connectionMode ? 'O
 
     function runSearch() { const term = document.getElementById('search-input').value.toLowerCase(); cy.nodes().removeClass('highlighted'); if (term) { const targets = cy.nodes('[type="person"]').filter(n => n.data('name').toLowerCase().includes(term)); targets.addClass('highlighted'); cy.animate({ center: { eles: targets }, zoom: 1.0 }, { duration: 500 }); } }
     
-    function loadData(ev) { recordState(); const reader = new FileReader(); reader.onload = (e) => { const data = JSON.parse(e.target.result); cy.elements().remove(); cy.add(data.elements || (data.cy && data.cy.elements) || []); groups = data.groups || {}; groupOrder = Object.keys(groups); updateUI(); updatePlist();  updateElist(); syncNotes(); drawGroups(); }; reader.readAsText(ev.target.files[0]); }
-    
-function saveData() { const blob = new Blob([JSON.stringify({ elements: cy.elements().map(e=>({group:e.isNode()?'nodes':'edges', data:e.data(), position:e.position()})), groups })], {type: "application/json"}); 
-const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = "mymap_v8.3.json"; a.click(); }
 //adding of person group     
 cy.on('dblclick', function(event) {
     // Only trigger if clicking the empty canvas (background)
@@ -773,11 +814,6 @@ const lli = document.createElement('li');
     });
 }
   
-function runAutoLayout() { cy.layout({ name: 'cola', infinite: false, fit: true, padding: 50, nodeSpacing: 100 }).run(); }
-
-    function recordState() { history.push(JSON.stringify({ elements: cy.elements().map(e=>({group:e.isNode()?'nodes':'edges', data:e.data(), position:e.position()})), groups })); if(history.length > 20) history.shift(); }
-  
-  function undo() { if(history.length) { const s = JSON.parse(history.pop()); cy.elements().remove(); cy.add(s.elements); groups = s.groups; groupOrder = Object.keys(groups); updateUI(); syncNotes(); drawGroups(); updatePlist();  updateElist(); } }
   
   function exportMermaid() { let m = "flowchart LR\n"; cy.nodes('[type="person"]').forEach(n => { m += `    ${n.id()}["${n.data('name')}"]\n`; }); cy.edges().forEach(e => { let arrow = (e.data('arrow') !== 'none' && e.data('sArrow') !== 'none') ? "<-->" : (e.data('arrow') !== 'none' ? "-->" : (e.data('sArrow') !== 'none' ? "<--" : "---")); m += `    ${e.source().id()} ${arrow} ${e.target().id()}\n`; }); Object.keys(groups).forEach(id => { if(groups[id].members.length > 0) m += `    subgraph ${id}["${groups[id].name}"]\n        ${groups[id].members.join('\n        ')}\n    end\n`; }); const blob = new Blob([m], {type: "text/plain"}); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = "mermaid.md"; a.click(); }
 
@@ -809,17 +845,6 @@ window.addEventListener('keydown', (e) => {
         deleteSelected();
     }
 });
-
-    window.onload = () => {
-        const saved = localStorage.getItem('relationMap_v56_autosave');
-        if(saved) {
-            const data = JSON.parse(saved);
-            cy.add(data.elements);
-            groups = data.groups || {};
-            groupOrder = data.groupOrder || Object.keys(groups);
-            updateUI(); syncNotes(); drawGroups(); updatePlist(); updateElist();
-        }
-    };
 </script>
 </body>
 </html>
