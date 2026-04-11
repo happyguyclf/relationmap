@@ -343,8 +343,41 @@ if (window.ToFlutterState) { window.ToFlutterState.postMessage(jsonString); }
     }
     cy.on('position dragfree add remove data', autoSave);
 
-    function loadData(ev) { recordState(); const reader = new FileReader(); reader.onload = (e) => { const data = JSON.parse(e.target.result); cy.elements().remove(); cy.add(data.elements || (data.cy && data.cy.elements) || []); groups = data.groups || {}; groupOrder = Object.keys(groups); updateUI(); updatePlist();  updateElist(); syncNotes(); drawGroups(); }; reader.readAsText(ev.target.files[0]); }
+// NEW: The Core Engine that actually updates the map
+function processMapJSON(jsonString) {
+    const data = JSON.parse(jsonString);
     
+    cy.elements().remove();
+    cy.add(data.elements || (data.cy && data.cy.elements) || []);
+    
+    groups = data.groups || {};
+    groupOrder = Object.keys(groups);
+    
+    updateUI(); 
+    updatePlist();  
+    updateElist(); 
+    syncNotes(); 
+    drawGroups();
+}
+
+// UPDATED: Your original web loader now uses the Core Engine
+function loadData(ev) { 
+    recordState(); 
+    const reader = new FileReader(); 
+    reader.onload = (e) => { 
+        processMapJSON(e.target.result); 
+    }; 
+    reader.readAsText(ev.target.files[0]); 
+}
+
+// NEW: The function Flutter will call when the app opens
+function loadFromMobile(jsonString) {
+    if(!jsonString) return;
+    recordState();
+    processMapJSON(jsonString);
+}
+
+
 function saveData() { 
     const dataString = JSON.stringify({ 
         elements: cy.elements().map(e=>({group:e.isNode()?'nodes':'edges', data:e.data(), position:e.position()})), 
@@ -362,6 +395,7 @@ function saveData() {
 
 // Function for Flutter to call to inject saved file data
 function loadFromMobile(jsonString) {
+console.log("Mobile data received!");
     if(!jsonString) return;
     const data = JSON.parse(jsonString);    
     recordState(); 
