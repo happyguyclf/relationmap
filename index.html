@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RelationMap v8.5</title>
+    <title>RelationMap v8.8</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.26.0/cytoscape.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/webcola@3.4.0/WebCola/cola.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/cytoscape-cola@2.5.1/cytoscape-cola.min.js"></script>
@@ -127,7 +127,7 @@
 <body>
 <div id="sidebar">
     <div class="sidebar-content">
-        <h1>RelationMap v8.6</h1>    
+        <h1>RelationMap v8.8</h1>    
  
    <button id="info-btn" onclick="toggleInfoPopup()" style="
         position: absolute; 
@@ -140,10 +140,8 @@ display: flex; align-items: center; justify-content: center;line-height: 1; padd
         <div style="display:flex; gap:4px;">
             <button onclick="undo()">Undo</button>
             <button onclick="saveData()">Export</button>
-            <button id="loadButton" onclick="loadData(event)">Load</button>
+           <button id="loadButton" onclick="loadData(event)">Load</button>
         </div>
-        
-
 <input type="file" id="fileInput" style="display:none" onchange="handleBrowserFile(event)">
 
         <div class="section-label">Management</div>
@@ -154,11 +152,14 @@ display: flex; align-items: center; justify-content: center;line-height: 1; padd
 
         <div id="edit-panel" class="panel">
             <input type="text" id="edit-node-name" oninput="updateNodeName()" placeholder="Name">
-            <textarea id="node-notes" onfocus="updateNotes()" oninput="updateNotes()" style="height:60px;" placeholder="Notes"></textarea>
+            <textarea id="node-notes" oninput="updateNotes()" style="height:60px;" placeholder="Notes"></textarea>
             <div class="color-row" id="node-color-picker"></div>
             <div id="group-tags-container"></div>
+         <div style="display:flex; gap:4px; margin-top:10px;">
+                <button id="note-vis-toggle" onclick="togglePersonNoteVis()" style="text-decoration:underline;"> Hide Notes </button>
+<button id="person-vis-toggle" onclick="togglePersonVis()" style="text-decoration:underline;">Hide Person</button>
+            </div>
 <div style="display:flex; justify-content: center; margin-top:5px;">
-<button id="person-vis-toggle" onclick="togglePersonVis()" style="text-decoration:underline; width:auto; margin-right:7px; font-weight: 600; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">Hide Person</button>
             <button onclick="deleteSelected()" style="color:#ef4444; width:auto ;  border:none; background:none; box-shadow: 0 2px 4px rgba(0,0,0,0.05);  text-decoration:underline;">Delete Person</button>
 </div>
         </div>
@@ -190,7 +191,7 @@ display: flex; align-items: center; justify-content: center;line-height: 1; padd
             <div class="color-row" id="group-color-picker"></div>
             <div class="section-label" style="margin-top:10px;">Members</div>
             <div id="member-checklist-container" class="member-checklist"></div>
-            <div style="display:flex; gap:4px; margin-top:10px;">
+           <div style="display:flex; gap:4px; margin-top:10px;">
                 <button onclick="reorderGroup('front')">Front</button>
                  <button onclick="reorderGroup('back')">Back</button>
 <button id="group-vis-toggle" onclick="toggleCurrentGroupVis()" style="text-decoration:underline;"> Hide </button>
@@ -287,7 +288,6 @@ display: flex; align-items: center; justify-content: center;line-height: 1; padd
     </div>
 </div>
 
-
 <script>
  function toggleSidebar() {
         const sidebar = document.getElementById('sidebar');
@@ -337,7 +337,7 @@ style: { 'width': 60, 'height': 60, 'background-color': 'data(color)', 'label': 
         ]
     });
 //data management
-    function autoSave() {
+   function autoSave() {
         const data = { elements: cy.elements().map(e=>({group:e.isNode()?'nodes':'edges', data:e.data(), position:e.position()})), groups, groupOrder };
 const jsonString = JSON.stringify(data);
         localStorage.setItem('relationMap_v56_autosave', jsonString);
@@ -346,52 +346,29 @@ if (window.ToFlutterState) { window.ToFlutterState.postMessage(jsonString); }
     }
     cy.on('position dragfree add remove data', autoSave);
 
- function openFileFromFlutter() {
-    if (window.ToFlutterOpenFile) {
-      window.ToFlutterOpenFile.postMessage('open');
-    } else {
-      console.error('ToFlutterOpenFile channel not available');
-    }
-  }
 
-
-  // Example button hookup
-  document.addEventListener('DOMContentLoaded', () => {
-    const loadButton = document.getElementById('loadButton');
-    if (loadButton) {
-      loadButton.addEventListener('click', openFileFromFlutter);
-    }
-  });
-
-
-// 1. This is your main button trigger
+  // 1. This is your main button trigger
 function loadData(event) {
     if (window.ToFlutterOpenFile) {
         // APP MODE: Tell Flutter to open the real phone file manager
         window.ToFlutterOpenFile.postMessage("open");
     } else {
         // BROWSER MODE: Trigger the hidden file input
-        document.getElementById('fileInput').click();
-    }
+        document.getElementById('fileInput').click();    }
 }
-
 // 2. This handles the file if it comes from the Browser
 function handleBrowserFile(ev) {
     const file = ev.target.files[0];
     if (!file) return;
-
     recordState();
     const reader = new FileReader();
     reader.onload = (e) => {
-        processMapJSON(e.target.result);
-    };
+        processMapJSON(e.target.result); };
     reader.readAsText(file);
 }
-
 // 3. This is what Flutter calls to "inject" the file content
 function loadFromMobile(jsonString) {
-    processMapJSON(jsonString);
-}
+    processMapJSON(jsonString);}
 
 // 4. The core logic (Keep this separate so both modes can use it)
 function processMapJSON(jsonString) {
@@ -399,23 +376,12 @@ function processMapJSON(jsonString) {
     cy.elements().remove();
     cy.add(data.elements || (data.cy && data.cy.elements) || []);
     groups = data.groups || {};
-    groupOrder = Object.keys(groups);
-    
-    // Refresh your UI
-    updateUI(); 
-    updatePlist(); 
-    updateElist(); 
-    syncNotes(); 
-    drawGroups();
+    groupOrder = Object.keys(groups);  syncNotes(); drawGroups();
 }
-
-
-
 
 function saveData() { 
     const dataString = JSON.stringify({ 
-        elements: cy.elements().map(e=>({group:e.isNode()?'nodes':'edges', data:e.data(), position:e.position()})), 
-        groups  });
+        elements: cy.elements().map(e=>({group:e.isNode()?'nodes':'edges', data:e.data(), position:e.position()})),   groups  });
     if (window.ToFlutterShare) {
         window.ToFlutterShare.postMessage(dataString);
       } else{
@@ -426,8 +392,6 @@ function saveData() {
     a.download = `mymap_${new Date().getTime()}.json`;
     a.click();}
 }
-
-
 // Keep your existing window.onload for normal browsers
 window.onload = () => {
     const saved = localStorage.getItem('relationMap_v56_autosave');
@@ -435,7 +399,6 @@ window.onload = () => {
         loadFromMobile(saved); 
     }
 };
-
 
 function runAutoLayout() { cy.layout({ name: 'cola', infinite: false, fit: true, padding: 50, nodeSpacing: 100 }).run(); }
 
@@ -561,8 +524,7 @@ cy.add([
     const personNode = cy.getElementById(id);
     cy.elements().unselect();
        showPersonEdit(personNode);
-    updatePlist();
-    updateElist();
+    updatePlist();   updateElist();
  personNode.select();
 }
 
@@ -593,18 +555,25 @@ const notesArea = document.getElementById('node-notes'); notesArea.value = node.
         palette.forEach(c=>{ const d=document.createElement('div'); d.className=`color-dot ${node.data('color')===c?'active':''}`; d.style.backgroundColor=c; d.onclick=()=>{recordState(); node.data('color',c); showPersonEdit(node); updatePlist();  updateElist();}; picker.appendChild(d); }); 
         const container = document.getElementById('group-tags-container'); container.innerHTML=''; 
 const visBtn = document.getElementById('person-vis-toggle'); visBtn.innerText = node.visible() ? 'Hide Person' : 'Show Person'; 
+const nBtn = document.getElementById('note-vis-toggle');
+nBtn.disabled = node.visible() ? false: true;
+const noteSetting = node.data('noteVisibleSetting') !== false; 
+nBtn.innerText = noteSetting ? 'Hide Notes' : 'Show Notes';
         Object.keys(groups).forEach(id=>{ const t=document.createElement('span'); t.className=`tag ${groups[id].members.includes(node.id())?'selected':''}`; t.innerText=groups[id].name; t.onclick=()=>{ recordState(); if(groups[id].members.includes(node.id())) groups[id].members=groups[id].members.filter(m=>m!==node.id()); else groups[id].members.push(node.id()); showPersonEdit(node); drawGroups(); }; container.appendChild(t); }); 
     }
+
 
 function togglePersonVis() {
     if (!activePersonNode) return;
     recordState();
     const person = activePersonNode;
     const note = cy.getElementById(person.id() + '_n');
-    if (person.visible()) { person.hide();
+const nBtn = document.getElementById('note-vis-toggle');
+    if (person.visible()) { person.hide(); nBtn.disabled = true;
         if (note.length) note.hide();
-    } else { person.show();
-        if (note.length) note.show(); }    document.getElementById('person-vis-toggle').innerText = person.visible() ? 'Hide Person' : 'Show Person'; updatePlist(); updateElist();}
+    } else { person.show(); nBtn.disabled = false;
+const shouldShowNote = person.data('noteVisibleSetting') !== false; 
+        if (note.length && shouldShowNote) note.show(); }    document.getElementById('person-vis-toggle').innerText = person.visible() ? 'Hide Person' : 'Show Person'; updatePlist(); updateElist();}
 
 function updateNodeName() { recordState(); const n = activePersonNode; if(n) n.data('name', document.getElementById('edit-node-name').value); updatePlist();  updateElist();}
     
@@ -620,6 +589,18 @@ const initialLabel = fullVal.length > 10 ? fullVal.substring(0, 10) + "..." : fu
         noteElement.data('text', initialLabel);
     };}
 }
+
+function togglePersonNoteVis() {
+if (!activePersonNode) return;
+    recordState();
+    const person = activePersonNode;
+    const note = cy.getElementById(person.id() + '_n');
+let isCurrentlySetToVisible = person.data('noteVisibleSetting') !== false; 
+let newSetting = !isCurrentlySetToVisible; person.data('noteVisibleSetting', newSetting);
+        if (note.length) {newSetting ? note.show() : note.hide()
+           }  
+document.getElementById('note-vis-toggle').innerText = newSetting ? 'Hide Notes' : 'Show Notes'; updatePlist(); updateElist();}
+
  //Connection edit 
 function showEdgeEdit(edge) {
     hidePanels();
@@ -820,12 +801,13 @@ function togglePersonListVis(id) {
     const person = cy.getElementById(id);
     const note = cy.getElementById(id + '_n');
     recordState();
+const nBtn = document.getElementById('note-vis-toggle');
         if (person.visible()) {
-        person.hide();
+        person.hide(); 
         if (note.length) note.hide();
     } else {
    person.show();
-   if (note.length) note.show();    }
+   if (note.length  && nBtn.innerText == 'Hide Notes' ) note.show();    }
     updatePlist(); updateElist(); updateUI();
 // REFRESH LOGIC: Only refresh the panel the user is actually looking at
  if (currentPanel === 'person' && activePersonNode && activePersonNode.id() === id) 
@@ -871,7 +853,6 @@ const lli = document.createElement('li');
     });
 }
   
-  
   function exportMermaid() { let m = "flowchart LR\n"; cy.nodes('[type="person"]').forEach(n => { m += `    ${n.id()}["${n.data('name')}"]\n`; }); cy.edges().forEach(e => { let arrow = (e.data('arrow') !== 'none' && e.data('sArrow') !== 'none') ? "<-->" : (e.data('arrow') !== 'none' ? "-->" : (e.data('sArrow') !== 'none' ? "<--" : "---")); m += `    ${e.source().id()} ${arrow} ${e.target().id()}\n`; }); Object.keys(groups).forEach(id => { if(groups[id].members.length > 0) m += `    subgraph ${id}["${groups[id].name}"]\n        ${groups[id].members.join('\n        ')}\n    end\n`; }); const blob = new Blob([m], {type: "text/plain"}); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = "mermaid.md"; a.click(); }
 
 // Clear all
@@ -902,6 +883,8 @@ window.addEventListener('keydown', (e) => {
         deleteSelected();
     }
 });
-</script>
+  </script>
 </body>
 </html>
+
+
