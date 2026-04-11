@@ -127,7 +127,7 @@
 <body>
 <div id="sidebar">
     <div class="sidebar-content">
-        <h1>RelationMap v8.8</h1>    
+        <h1>RelationMap v8.9</h1>    
  
    <button id="info-btn" onclick="toggleInfoPopup()" style="
         position: absolute; 
@@ -284,6 +284,8 @@ display: flex; align-items: center; justify-content: center;line-height: 1; padd
         <button onclick="document.getElementById('info-popup').style.display='none'" style="width: auto; background: #f3f4f6; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px;">Close</button>        
     </div>
 </div>
+<button id="loadButton">Load</button>
+
 
 <script>
  function toggleSidebar() {
@@ -343,6 +345,23 @@ if (window.ToFlutterState) { window.ToFlutterState.postMessage(jsonString); }
     }
     cy.on('position dragfree add remove data', autoSave);
 
+ function openFileFromFlutter() {
+    if (window.ToFlutterOpenFile) {
+      window.ToFlutterOpenFile.postMessage('open');
+    } else {
+      console.error('ToFlutterOpenFile channel not available');
+    }
+  }
+
+
+  // Example button hookup
+  document.addEventListener('DOMContentLoaded', () => {
+    const loadButton = document.getElementById('loadButton');
+    if (loadButton) {
+      loadButton.addEventListener('click', openFileFromFlutter);
+    }
+  });
+
 
 function processMapJSON(jsonString) {
     if(!jsonString) return;
@@ -361,7 +380,7 @@ function processMapJSON(jsonString) {
 function loadData(ev) {
     // If we are in the Flutter App
     if (window.ToFlutterOpenFile) {
-        window.ToFlutterOpenFile.postMessage("open");
+        window.ToFlutterOpenFile?.postMessage("open");
     } 
     // If we are in a normal Browser
     else if (ev && ev.target && ev.target.files[0]) {
