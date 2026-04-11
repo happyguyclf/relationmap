@@ -376,7 +376,7 @@ function processMapJSON(jsonString) {
     cy.elements().remove();
     cy.add(data.elements || (data.cy && data.cy.elements) || []);
     groups = data.groups || {};
-    groupOrder = Object.keys(groups);  syncNotes(); drawGroups();
+    groupOrder = Object.keys(groups); updateUI(); updatePlist(); updateElist(); syncNotes(); drawGroups();
 }
 
 function saveData() { 
