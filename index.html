@@ -127,7 +127,7 @@
 <body>
 <div id="sidebar">
     <div class="sidebar-content">
-        <h1>RelationMap v8.7</h1>    
+        <h1>RelationMap v8.8</h1>    
  
    <button id="info-btn" onclick="toggleInfoPopup()" style="
         position: absolute; 
@@ -343,31 +343,34 @@ if (window.ToFlutterState) { window.ToFlutterState.postMessage(jsonString); }
     }
     cy.on('position dragfree add remove data', autoSave);
 
-// NEW: The Core Engine that actually updates the map
+
 function processMapJSON(jsonString) {
+    if(!jsonString) return;
     const data = JSON.parse(jsonString);
     
     cy.elements().remove();
     cy.add(data.elements || (data.cy && data.cy.elements) || []);
-    
     groups = data.groups || {};
     groupOrder = Object.keys(groups);
     
-    updateUI(); 
-    updatePlist();  
-    updateElist(); 
-    syncNotes(); 
-    drawGroups();
+    updateUI(); updatePlist(); updateElist(); syncNotes(); drawGroups();
+    if (typeof recordState === 'function') recordState();
 }
 
-// UPDATED: Your original web loader now uses the Core Engine
-function loadData(ev) { 
-    recordState(); 
-    const reader = new FileReader(); 
-    reader.onload = (e) => { 
-        processMapJSON(e.target.result); 
-    }; 
-    reader.readAsText(ev.target.files[0]); 
+// 2. The "Loader" - This decides HOW to get the file
+function loadData(ev) {
+    // If we are in the Flutter App
+    if (window.ToFlutterOpenFile) {
+        window.ToFlutterOpenFile.postMessage("open");
+    } 
+    // If we are in a normal Browser
+    else if (ev && ev.target && ev.target.files[0]) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            processMapJSON(e.target.result);
+        };
+        reader.readAsText(ev.target.files[0]);
+    }
 }
 
 // NEW: The function Flutter will call when the app opens
@@ -393,18 +396,7 @@ function saveData() {
     a.click();}
 }
 
-// Function for Flutter to call to inject saved file data
-function loadFromMobile(jsonString) {
-console.log("Mobile data received!");
-    if(!jsonString) return;
-    const data = JSON.parse(jsonString);    
-    recordState(); 
-    cy.elements().remove();
-    cy.add(data.elements);
-    groups = data.groups || {};
-    groupOrder = data.groupOrder || Object.keys(groups);    
-    updateUI(); syncNotes(); drawGroups(); updatePlist(); updateElist();
-}
+
 // Keep your existing window.onload for normal browsers
 window.onload = () => {
     const saved = localStorage.getItem('relationMap_v56_autosave');
