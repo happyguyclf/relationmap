@@ -127,7 +127,7 @@
 <body>
 <div id="sidebar">
     <div class="sidebar-content">
-        <h1>RelationMap v8.9</h1>    
+        <h1>RelationMap v8.6</h1>    
  
    <button id="info-btn" onclick="toggleInfoPopup()" style="
         position: absolute; 
@@ -140,9 +140,11 @@ display: flex; align-items: center; justify-content: center;line-height: 1; padd
         <div style="display:flex; gap:4px;">
             <button onclick="undo()">Undo</button>
             <button onclick="saveData()">Export</button>
-            <button onclick="document.getElementById('fileInput').click()">Load</button>
+            <button id="loadButton" onclick="loadData(event)">Load</button>
         </div>
-        <input type="file" id="fileInput" style="display:none" onchange="loadData(event)">
+        
+
+<input type="file" id="fileInput" style="display:none" onchange="handleBrowserFile(event)">
 
         <div class="section-label">Management</div>
         <button class="btn-main" onclick="addPerson()">+ Add Person</button>
@@ -284,7 +286,6 @@ display: flex; align-items: center; justify-content: center;line-height: 1; padd
         <button onclick="document.getElementById('info-popup').style.display='none'" style="width: auto; background: #f3f4f6; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px;">Close</button>        
     </div>
 </div>
-<button id="loadButton">Load</button>
 
 
 <script>
@@ -363,41 +364,52 @@ if (window.ToFlutterState) { window.ToFlutterState.postMessage(jsonString); }
   });
 
 
+// 1. This is your main button trigger
+function loadData(event) {
+    if (window.ToFlutterOpenFile) {
+        // APP MODE: Tell Flutter to open the real phone file manager
+        window.ToFlutterOpenFile.postMessage("open");
+    } else {
+        // BROWSER MODE: Trigger the hidden file input
+        document.getElementById('fileInput').click();
+    }
+}
+
+// 2. This handles the file if it comes from the Browser
+function handleBrowserFile(ev) {
+    const file = ev.target.files[0];
+    if (!file) return;
+
+    recordState();
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        processMapJSON(e.target.result);
+    };
+    reader.readAsText(file);
+}
+
+// 3. This is what Flutter calls to "inject" the file content
+function loadFromMobile(jsonString) {
+    processMapJSON(jsonString);
+}
+
+// 4. The core logic (Keep this separate so both modes can use it)
 function processMapJSON(jsonString) {
-    if(!jsonString) return;
     const data = JSON.parse(jsonString);
-    
     cy.elements().remove();
     cy.add(data.elements || (data.cy && data.cy.elements) || []);
     groups = data.groups || {};
     groupOrder = Object.keys(groups);
     
-    updateUI(); updatePlist(); updateElist(); syncNotes(); drawGroups();
-    if (typeof recordState === 'function') recordState();
+    // Refresh your UI
+    updateUI(); 
+    updatePlist(); 
+    updateElist(); 
+    syncNotes(); 
+    drawGroups();
 }
 
-// 2. The "Loader" - This decides HOW to get the file
-function loadData(ev) {
-    // If we are in the Flutter App
-    if (window.ToFlutterOpenFile) {
-        window.ToFlutterOpenFile?.postMessage("open");
-    } 
-    // If we are in a normal Browser
-    else if (ev && ev.target && ev.target.files[0]) {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            processMapJSON(e.target.result);
-        };
-        reader.readAsText(ev.target.files[0]);
-    }
-}
 
-// NEW: The function Flutter will call when the app opens
-function loadFromMobile(jsonString) {
-    if(!jsonString) return;
-    recordState();
-    processMapJSON(jsonString);
-}
 
 
 function saveData() { 
