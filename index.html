@@ -3,43 +3,44 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RelationMap v8.8</title>
+    <title>RelationMap v9.1</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.26.0/cytoscape.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/webcola@3.4.0/WebCola/cola.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/cytoscape-cola@2.5.1/cytoscape-cola.min.js"></script>
-    <link rel="manifest" href="/manifest.json">
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { display: flex; height: 100vh; font-family: -apple-system, sans-serif; background: #f8fafc; overflow: hidden; }
-        
-        #sidebar { 
-            width: 320px; background: white; border-right: 1px solid #e2e8f0; 
+       
+        #sidebar {
+            width: 320px; background: white; border-right: 1px solid #e2e8f0;
             display: flex; flex-direction: column; z-index: 1000;
-            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             height: 100vh; overflow-y: auto; scrollbar-width: thin; position: relative;
         }
-        
+       
         .sidebar-content { padding: 20px; width: 100%; }
         #sidebar.collapsed { transform: translateX(-320px); margin-right: -320px; }
+
 
         /* FLOATING TOGGLE */
         #toggle-tab {
             position: fixed; left: 320px; top: 50%; transform: translateY(-50%);
-            width: 30px; height: 70px; background: #4F46E5; border-radius: 0 8px 8px 0; 
-            cursor: pointer; display: flex; align-items: center; justify-content: center; 
-            font-size: 14px; color: white; z-index: 9999; 
+            width: 30px; height: 70px; background: #4F46E5; border-radius: 0 8px 8px 0;
+            cursor: pointer; display: flex; align-items: center; justify-content: center;
+            font-size: 14px; color: white; z-index: 9999;
             transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             box-shadow: 2px 0 8px rgba(0,0,0,0.15);
         }
         #sidebar.collapsed + #toggle-tab { left: 0; }
 
+
         /* ---  TOP-RIGHT CONTROLS --- */
-        .map-controls { 
-            position: absolute; top: 20px; right: 20px; 
-            z-index: 100; display: flex; gap: 10px; 
+        .map-controls {
+            position: absolute; top: 20px; right: 20px;
+            z-index: 100; display: flex; gap: 10px;
         }
-        .mini-btn { 
-            width: auto; padding: 8px 14px; 
+        .mini-btn {
+            width: auto; padding: 8px 14px;
             background: #ffffff; color: #1e293b;
             font-size: 11px; font-weight: 700;
             border: 1px solid #cbd5e1; border-radius: 8px;
@@ -48,37 +49,46 @@
         }
         .mini-btn:hover { background: #f1f5f9; border-color: #94a3b8; }
 
+
         h1 { color: #606263; font-size: 1.1rem; font-weight: 800; margin-bottom: 15px; text-transform: uppercase; }
+
 
 .credits {
     position: absolute;
     top: 7px;  left: 7px;    
     z-index: 999;  
-    
+   
     font-family: sans-serif;
-    font-size: 9px; font-weight: bold; color: #94a3b8; 
-    background: rgba(255, 255, 255, 0.7); 
+    font-size: 9px; font-weight: bold; color: #94a3b8;
+    background: rgba(255, 255, 255, 0.7);
     padding: 5px 10px;  border-radius: 4px;
     pointer-events: none;
     letter-spacing: 0.5px; text-transform: uppercase;
 }
 
 
+
+
         #search-input { width: 100%; padding: 10px; border: 2px solid #f1f5f9; border-radius: 8px; margin-bottom: 15px; font-size: 13px; outline: none; }
 
+
         .section-label { font-size: 10px; font-weight: 800; color: #94a3b8; text-transform: uppercase; margin: 18px 0 6px; }
+
+
 
 
         button { width: 100%; padding: 8px; margin-bottom: 5px; border-radius: 6px; border: 1px solid #e2e8f0; cursor: pointer; font-weight: 600; font-size: 12px; transition: 0.2s; }
         .btn-main { background: #4F46E5; color: white; border: none; }
         .btn-group { background: #10B981; color: white; border: none; }
-        
+       
         #cy-container { flex-grow: 1; position: relative; background: white; z-index: 1; }
         #cy { position: absolute; width: 100%; height: 100%; z-index: 2; background: transparent !important;}
 
+
         #overlay-canvas { position: absolute; width: 100%; height: 100%; z-index: 1; pointer-events: none; }
-        
+       
         .save-indicator { position: absolute; bottom: 15px; left: 15px; z-index: 100; font-size: 10px; color: #94a3b8; pointer-events: none; }
+
 
         .panel { display: none; background: #f8fafc; padding: 15px; padding-bottom: 5px; border-radius: 10px; border: 1px solid #e2e8f0; margin-top: 10px; }
        
@@ -92,6 +102,7 @@
         .member-checklist { max-height: 120px; overflow-y: auto; background: white; border: 1px solid #e2e8f0; border-radius: 6px; padding: 5px; margin-top: 8px; }
         .check-item { display: flex; align-items: center; gap: 8px; font-size: 11px; padding: 3px 0; cursor: pointer; }
         .check-item input { width: auto; margin: 0; }
+
 
 .tab-bar {
     display: flex;
@@ -118,23 +129,30 @@
 .tab-content::-webkit-scrollbar-thumb { background-color: #94a3b8; border-radius: 10px;  border: 1px solid #f1f5f9;}
 
 
+
+
 @keyframes fadeIn {
     from { opacity: 0; }
     to { opacity: 1; }    }
+.info-toolCredit {margin-bottom: 4px; font-size: 12px;}
+
 
     </style>
 </head>
 
+
 <body>
 <div id="sidebar">
     <div class="sidebar-content">
-        <h1>RelationMap v8.8</h1>    
+        <h1>RelationMap v9.1</h1>    
  
    <button id="info-btn" onclick="toggleInfoPopup()" style="
-        position: absolute; 
-        top: 10px; right: 10px; width: 20px; height: 20px; 
+        position: absolute;
+        top: 10px; right: 10px; width: 20px; height: 20px;
         border-radius: 50%; background: none; border: none; color: #aaa; font-size: 16px; cursor: pointer; font-weight: bold; z-index: 100;
 display: flex; align-items: center; justify-content: center;line-height: 1; padding: 0; ">ⓘ</button>
+
+
 
 
         <input type="text" id="search-input" placeholder="Search & Fly..." oninput="runSearch()">
@@ -145,10 +163,13 @@ display: flex; align-items: center; justify-content: center;line-height: 1; padd
         </div>
 <input type="file" id="fileInput" style="display:none" onchange="handleBrowserFile(event)">
 
+
         <div class="section-label">Management</div>
         <button class="btn-main" onclick="addPerson()">+ Add Person</button>
         <button class="btn-group" onclick="addGroup()">+ Add Group</button>
         <button id="connBtn" onclick="toggleConnectionMode()">Link Mode: OFF</button>
+
+
 
 
         <div id="edit-panel" class="panel">
@@ -166,13 +187,15 @@ display: flex; align-items: center; justify-content: center;line-height: 1; padd
         </div>
 
 
+
+
         <div id="edge-panel" class="panel" style=" background:#fff7ed;">
 <div style="display:flex; justify-content: center; margin-top:5px;">
-  <div id="edge-participants" style="width: atuo; padding: 8px; background: #f8fafc; border-radius: 6px; border: 1px solid #e2e8f0; font-size: 13px; display: flex; align-items: center; justify-content: space-between;"> 
-     <button id="edge-source-name" style="background: none; border: none; padding: 0; white-space:nowrap; cursor: pointer; font-weight: 500; color: #443b60;"></button> 
-     <span style="color: #94a3b8;">&nbsp──&nbsp</span> 
-     <button id="edge-target-name" style="background: none; border: none; padding: 0; white-space:nowrap; cursor: pointer; font-weight: 500; color: #443b60;"></button> 
-  </div> 
+  <div id="edge-participants" style="width: atuo; padding: 8px; background: #f8fafc; border-radius: 6px; border: 1px solid #e2e8f0; font-size: 13px; display: flex; align-items: center; justify-content: space-between;">
+     <button id="edge-source-name" style="background: none; border: none; padding: 0; white-space:nowrap; cursor: pointer; font-weight: 500; color: #443b60;"></button>
+     <span style="color: #94a3b8;">&nbsp──&nbsp</span>
+     <button id="edge-target-name" style="background: none; border: none; padding: 0; white-space:nowrap; cursor: pointer; font-weight: 500; color: #443b60;"></button>
+  </div>
 </div>
             <input type="text" id="edge-label-input" oninput="updateEdgeLabel()" placeholder="Relationship">
             <textarea id="edge-notes"  oninput="updateEdgeNotes()" style="height:60px;" placeholder="Notes"></textarea>
@@ -184,6 +207,8 @@ display: flex; align-items: center; justify-content: center;line-height: 1; padd
             <button onclick="deleteSelected()" style="color:#ef4444;  width: auto; border:none; background:none; box-shadow: 0 2px 4px rgba(0,0,0,0.05);  text-decoration:underline;">Delete Link</button>
 </div>
         </div>
+
+
 
 
         <div id="group-edit-panel" class="panel" style="background:#f0fdf4;">
@@ -201,7 +226,8 @@ display: flex; align-items: center; justify-content: center;line-height: 1; padd
      <button onclick="deleteGroup()" style="color:#ef4444;  width: auto; border:none; background:none; box-shadow: 0 2px 4px rgba(0,0,0,0.05);  text-decoration:underline; ">Delete Group</button>
 </div>
      </div>
-            
+           
+
 
 <div id="itemlist-panel">
     <div class="tab-bar">
@@ -219,19 +245,23 @@ display: flex; align-items: center; justify-content: center;line-height: 1; padd
 <div id="connection-list"></div>
     </div>
 </div>
-                
+               
         <button onclick="exportMermaid()" style="margin-top:20px; font-size:14px; color:#4F46E5; background:none; border:none; text-decoration:underline;">Export Mermaid.md</button>
 
-<div style="display:flex; justify-content: center; padding:10px; border-top:1px solid #eee; margin-top:auto;">
+
+<div style="display:flex; justify-content: center; padding:10px; border-top:1px solid #eee; margin-top:auto; margin-bottom: 80px;">
     <button onclick="openClearModal()" style="width:170px; padding:7px; background: white; color:#b91c1c; border:2px solid #fecaca; border-radius:6px; cursor:pointer; font-size:13px; font-weight:550; display:flex; align-items:center; justify-content:center; gap:5px;">
      Clear All
     </button>
 </div>
 
+
     </div>
 </div>
 
+
 <div id="toggle-tab" onclick="toggleSidebar()">◀</div>
+
 
 <div id="cy-container">
     <div class="save-indicator" id="save-status">Cloud Sync Ready</div>
@@ -244,15 +274,17 @@ display: flex; align-items: center; justify-content: center;line-height: 1; padd
     </div>
 </div>
 
+
 <div id="clear-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:9999; align-items:center; justify-content:center;">
     <div style="background:white; padding:20px; border-radius:8px; width:320px; box-shadow: 0 10px 25px rgba(0,0,0,0.2);">
         <h3 style="margin-top:0; margin-bottom: 10px; color:#ef4444;">Clear All Data?</h3>
         <p style="font-size:14px; color:#64748b;">This will permanently delete all people, connections, and groups.</p>
-        
+       
         <label style="display:flex; align-items:center; white-space:nowrap; margin-bottom: 17px; margin-top: 17px; font-size:13px; cursor:pointer; color:#334155;">
             <input type="checkbox" id="backup-checkbox" checked style="margin-right:8px; height:16px; width:16px; " >
             Create JSON backup before clearing
         </label>
+
 
         <div style="display:flex; justify-content:flex-end; gap:10px;">
             <button onclick="executeClearAll()" style="background:#ef4444; color:white; border:none; padding:8px 15px; border-radius:4px; cursor:pointer; font-weight:bold;">Yes, Clear All</button>
@@ -261,18 +293,19 @@ display: flex; align-items: center; justify-content: center;line-height: 1; padd
     </div>
 </div>
 
+
 <div id="info-popup" style="
-    display: none;  position: fixed; top: 50%;  left: 50%;  transform: translate(-50%, -50%); 
+    display: none;  position: fixed; top: 50%;  left: 50%;  transform: translate(-50%, -50%);
     width: 90%;  max-width: 650px; max-height: 85vh;
-    background: white;   border: 1px solid #ddd;  border-radius: 12px; 
+    background: white;   border: 1px solid #ddd;  border-radius: 12px;
     padding: 25px;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.2); 
+    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
     z-index: 9999;    font-family: sans-serif;  overflow-y: auto;">
   <div style="margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; ">
-  <h3 style="margin-top:0; color: #1a1a1a;">About RelationMap</h3>   
+  <h3 style="margin-top:0; color: #1a1a1a;">About RelationMap</h3>  
 <span style="font-size: 11px; color: #888;">Created by HappyGuy119</span>
    </div>
-  <div style="font-size: 13px; line-height: 1.6; color: #333;">
+  <div style="font-size: 13px; line-height: 1.6; color: #333; scrollbar-width: thin; position: relative;">
         <p>This tool helps visualize complex human relationships. Start by tapping the <b>“Add Person”</b> button or <b>double-clicking anywhere on the canvas</b> to create a person. Use the <b>Grouping feature</b> to categorize individuals into communities or organizations to see where different worlds overlap or remain isolated.</p>
 <p>Turn on <b>link mode</b> and tap two persons to create a connection.</p>
         <p style="margin-top: 5px;"><b>Connection Styles:</b></p>
@@ -283,11 +316,33 @@ display: flex; align-items: center; justify-content: center;line-height: 1; padd
         </ul>
         <p>Of course, you can use this mind map-making tool for <b>other purposes</b>. While designed for people, this logic works perfectly for mapping project dependencies, software architectures, or historical events.</p>
         <p>Your map is <b>stored exclusively in your browser’s cache</b>. It persists when you close the window, but clearing your cache will delete it. To save your work permanently, use the <b>Export to JSON</b> feature to save a file to your device.</p>
-    </div>
-    <div style="margin-top: 15px; display: flex; justify-content: center; align-items: center; pt: 15px;">
+    <section class="credits-section" style="font-family: sans-serif; line-height: 1.5; color: #777; max-width: 600px; margin-top: 10px;">
+    <h4 style="border-top: 2px solid #eee; padding-top: 7px;">Technology & Open Source Attribution</h4>    
+    <p>This tool is built using several powerful open-source libraries that make complex data visualization possible:</p>    
+    <ul style="list-style-type: none; padding-left: 0;">
+        <li class="info-toolCredit">
+            <strong><a href="https://js.cytoscape.org/" target="_blank" style="color: #007bff; text-decoration: none;">Cytoscape.js</a></strong>
+            <span style="color: #666;">: Our core graph theory engine (LGPL 2.1).</span>
+        </li>        
+        <li class="info-toolCredit">
+            <strong><a href="https://ialab.it.monash.edu/webcola/" target="_blank" style="color: #007bff; text-decoration: none;">WebCola</a></strong>
+            <span style="color: #666;">: Provides the physics-based "constraint-based" layout (MIT License).</span>
+        </li>        
+        <li class="info-toolCredit">
+            <strong><a href="https://github.com/cytoscape/cytoscape.js-cola" target="_blank" style="color: #007bff; text-decoration: none;">cytoscape-cola</a></strong>
+            <span style="color: #666;">: The bridge connecting the core engine with the layout physics (MIT License).</span>
+        </li>
+    </ul>    
+    <p style="font-style: italic; font-size: 0.85em; margin-top: 10px; color: #888;">
+        Special thanks to the developers and the academic community for making these tools available for public use.
+    </p>
+</section>
+ </div>
+    <div style="margin-top: 15px; display: flex; justify-content: center; align-items: center;">
         <button onclick="document.getElementById('info-popup').style.display='none'" style="width: auto; background: #f3f4f6; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px;">Close</button>        
     </div>
 </div>
+
 
 <script>
  function toggleSidebar() {
@@ -295,6 +350,7 @@ display: flex; align-items: center; justify-content: center;line-height: 1; padd
         const tab = document.getElementById('toggle-tab');
         sidebar.classList.toggle('collapsed');
         tab.innerText = sidebar.classList.contains('collapsed') ? '▶' : '◀'; }
+
 
 function toggleInfoPopup() {
     const popup = document.getElementById('info-popup');
@@ -307,6 +363,7 @@ function toggleInfoPopup() {
         popup.style.display = 'none';
     }}
 
+
 function closePopupOnClickOutside(event) {
     const popup = document.getElementById('info-popup');
     const btn = document.getElementById('info-btn');
@@ -315,23 +372,27 @@ function closePopupOnClickOutside(event) {
         window.removeEventListener('click', closePopupOnClickOutside);
     }}
 
+
 let activePersonNode = null;
-    let connectionMode = false, selectedNodes = [], history = [], groups = {}, activeGroupId = null; 
+    let connectionMode = false, selectedNodes = [], history = [], groups = {}, activeGroupId = null;
 let currentPanel = null;
 let activeEdge = null;
 
-    let groupOrder = []; 
+
+    let groupOrder = [];
     const canvas = document.getElementById('overlay-canvas');
     const ctx = canvas.getContext('2d');
     const palette = ['#4F46E5', '#10B981', '#3B82F6', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#06B6D4', '#FFFFFF'];
 
+
     const cy = cytoscape({
         container: document.getElementById('cy'),
         style: [
-            { selector: 'node[type="person"]', 
+            { selector: 'node[type="person"]',
 style: { 'width': 60, 'height': 60, 'background-color': 'data(color)', 'label': 'data(name)', 'text-valign': 'center', 'text-halign': 'center', 'color': '#ffffff', 'font-size': '13px', 'font-weight': 'bold', 'text-wrap': 'wrap', 'text-max-width': '55px', 'text-outline-color': '#000000', 'text-outline-width': '1.2px', 'z-index': 9 }},
             { selector: 'node[type="note"]', style: { 'width': 60, 'height': 10, 'shape': 'rectangle', 'label': 'data(text)', 'font-size': '10px', 'color': '#64748b', 'text-valign': 'center', 'text-halign': 'center', 'background-opacity': 0, 'z-index': 10 }},
             { selector: 'edge', style: { 'width': 2, 'line-color': '#94a3b8', 'curve-style': 'bezier', 'target-arrow-shape': 'data(arrow)', 'source-arrow-shape': 'data(sArrow)', 'line-style': 'data(lineStyle)', 'label': 'data(label)', 'font-size': '10px', 'edge-text-rotation': 'autorotate', 'text-margin-y': -10, 'text-background-opacity': 0 }},
+
 
             { selector: ':selected', style: { 'border-width': 4, 'border-color': '#00ff00' }},
             { selector: '.highlighted', style: { 'border-width': 6, 'border-color': '#fff400' }}
@@ -346,6 +407,8 @@ const jsonString = JSON.stringify(data);
 if (window.ToFlutterState) { window.ToFlutterState.postMessage(jsonString); }
     }
     cy.on('position dragfree add remove data', autoSave);
+
+
 
 
   // 1. This is your main button trigger
@@ -371,6 +434,7 @@ function handleBrowserFile(ev) {
 function loadFromMobile(jsonString) {
     processMapJSON(jsonString);}
 
+
 // 4. The core logic (Keep this separate so both modes can use it)
 function processMapJSON(jsonString) {
     const data = JSON.parse(jsonString);
@@ -380,14 +444,15 @@ function processMapJSON(jsonString) {
     groupOrder = Object.keys(groups); updateUI(); updatePlist(); updateElist(); syncNotes(); drawGroups();
 }
 
-function saveData() { 
-    const dataString = JSON.stringify({ 
+
+function saveData() {
+    const dataString = JSON.stringify({
         elements: cy.elements().map(e=>({group:e.isNode()?'nodes':'edges', data:e.data(), position:e.position()})),   groups  });
     if (window.ToFlutterShare) {
         window.ToFlutterShare.postMessage(dataString);
       } else{
     // Normal Browser Download Logic
-    const blob = new Blob([dataString], {type: "application/json"}); 
+    const blob = new Blob([dataString], {type: "application/json"});
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
     a.download = `mymap_${new Date().getTime()}.json`;
@@ -397,18 +462,25 @@ function saveData() {
 window.onload = () => {
     const saved = localStorage.getItem('relationMap_v56_autosave');
     if(saved) {
-        loadFromMobile(saved); 
+        loadFromMobile(saved);
     }
 };
-    if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js');
-    }
 
-function runAutoLayout() { cy.layout({ name: 'cola', infinite: false, fit: true, padding: 50, nodeSpacing: 100 }).run(); }
+
+
 
     function recordState() { history.push(JSON.stringify({ elements: cy.elements().map(e=>({group:e.isNode()?'nodes':'edges', data:e.data(), position:e.position()})), groups })); if(history.length > 20) history.shift(); }
-  
+ 
   function undo() { if(history.length) { const s = JSON.parse(history.pop()); cy.elements().remove(); cy.add(s.elements); groups = s.groups; groupOrder = Object.keys(groups); updateUI(); syncNotes(); drawGroups(); updatePlist();  updateElist(); } }
+
+
+function runAutoLayout() {
+  cy.layout({
+    name: 'cola',  infinite: false,  fit: true,
+    padding: 50,
+    nodeSpacing: 80,   edgeLength: 150,         maxSimulationTime: 2000,
+    ungrabifyWhileSimulating: true   }).run();}
+
 
 //drawing group
     function getConvexHull(points) {
@@ -420,7 +492,22 @@ function runAutoLayout() { cy.layout({ name: 'cola', infinite: false, fit: true,
         lower.pop(); upper.pop(); return lower.concat(upper);
     }
 
-    let groupHulls = []; 
+
+let groupHulls = [];
+function throttle(func, limit) {
+    let inThrottle;let lastFunc; let lastContext; 
+    return function() {
+        const args = arguments;
+        const context = this;
+        if (!inThrottle) {
+            func.apply(context, args);
+            inThrottle = true;
+            setTimeout(() => {inThrottle = false; if (lastFunc) { lastFunc.apply(lastContext, args); lastFunc = null; } }, limit);}
+else { lastFunc = func; lastContext = context; 
+        }
+    }
+}
+const throttledDrawGroups = throttle(drawGroups, 16); // ~60fps
     function drawGroups() {
         canvas.width = canvas.clientWidth; canvas.height = canvas.clientHeight;
         ctx.clearRect(0,0,canvas.width,canvas.height); groupHulls = [];
@@ -435,7 +522,7 @@ function runAutoLayout() { cy.layout({ name: 'cola', infinite: false, fit: true,
                 for(let i=0; i<10; i++) pts.push({ x: pos.x + r * Math.cos(i*Math.PI/4), y: pos.y + r * Math.sin(i*Math.PI/4) });
             });
             const hull = getConvexHull(pts);
-            groupHulls.push({ id, hull }); 
+            groupHulls.push({ id, hull });
             ctx.beginPath(); ctx.fillStyle = g.color + '15'; ctx.strokeStyle = g.color + '44';
             ctx.moveTo(hull[0].x, hull[0].y); for(let i=1; i<hull.length; i++) ctx.lineTo(hull[i].x, hull[i].y);
             ctx.closePath(); ctx.fill(); ctx.stroke();
@@ -444,17 +531,19 @@ function runAutoLayout() { cy.layout({ name: 'cola', infinite: false, fit: true,
             ctx.globalAlpha = 1;
         });
     }
-    cy.on('render pan zoom', drawGroups);
+    cy.on('add position render pan zoom', throttledDrawGroups);
+
 
 cy.on('mouseover', 'node[type="note"]', (e) => {
     const note = e.target;  
-    const full = note.data('fullText'); 
+    const full = note.data('fullText');
     if (full) { note.data('text', full);
-note.style({ 'text-wrap': 'wrap', // Allow multiple lines 
-'text-max-width': '100px', 'line-height': 1.2, // Spacing between lines 
+note.style({ 'text-wrap': 'wrap', // Allow multiple lines
+'text-max-width': '100px', 'line-height': 1.2, // Spacing between lines
 'z-index': 1000 });
     }
 });
+
 
 cy.on('mouseout', 'node[type="note"]', (e) => {
     const note = e.target;
@@ -464,107 +553,148 @@ cy.on('mouseout', 'node[type="note"]', (e) => {
     note.style({ 'text-wrap': 'none', 'z-index': 10 });
 });
 
+
 cy.on('add', 'node[type="note"]', (e) => {
     e.target.grabbable(false);});
 
+
 cy.nodes('[type="note"]').forEach(n => n.grabbable(false));
 
+
     cy.on('tap', (e) => {
-        if(e.target === cy) { 
+        if(e.target === cy) {
             const pos = e.renderedPosition;
-            const hit = [...groupHulls].reverse().find(gh => { 
+            const hit = [...groupHulls].reverse().find(gh => {
                 ctx.beginPath(); ctx.moveTo(gh.hull[0].x, gh.hull[0].y);
                 for(let i=1; i<gh.hull.length; i++) ctx.lineTo(gh.hull[i].x, gh.hull[i].y);
                 ctx.closePath(); return ctx.isPointInPath(pos.x, pos.y);
             });
             if(hit) { showGroupEdit(hit.id); } else { hidePanels(); }
-            return; 
+            return;
         }
         const ele = e.target;
         if(ele.isEdge()) { showEdgeEdit(ele); return; }
-        if(ele.data('type') === 'person') {   
-     //adding connection     
+        if(ele.data('type') === 'person') {  
+     //adding connection    
        if(connectionMode) {
                 selectedNodes.push(ele.id());
                 if(selectedNodes.length === 2) { recordState(); const newEdge = cy.add({group:'edges', data:{ source:selectedNodes[0], target:selectedNodes[1], arrow:'triangle', sArrow:'none', lineStyle:'dotted', label:'', notes:''}}); toggleConnectionMode(); updateElist(); showEdgeEdit(newEdge[0]);}
-            } else { showPersonEdit(ele); }; 
+            } else { showPersonEdit(ele); };
         }
     });
 
-    function toggleConnectionMode() { connectionMode = !connectionMode; selectedNodes = []; 
+
+    function toggleConnectionMode() { connectionMode = !connectionMode; selectedNodes = [];
 document.getElementById('connBtn').classList.toggle('btn-group');
 document.getElementById('connBtn').innerText = `Link Mode: ${connectionMode ? 'ON' : 'OFF'}`; }
 
-    
+
+   
     function syncNotes() { cy.nodes('[type="person"]').forEach(p => { const n = cy.getElementById(p.id()+'_n'); if(n.length) n.position({ x: p.position().x, y: p.position().y + 35 }); }); }
     cy.on('position', 'node[type="person"]', syncNotes);
 
+
     function runSearch() { const term = document.getElementById('search-input').value.toLowerCase(); cy.nodes().removeClass('highlighted'); if (term) { const targets = cy.nodes('[type="person"]').filter(n => n.data('name').toLowerCase().includes(term)); targets.addClass('highlighted'); cy.animate({ center: { eles: targets }, zoom: 1.0 }, { duration: 500 }); } }
-    
-//adding of person group     
+   
+//adding of person group    
 cy.on('dblclick', function(event) {
     // Only trigger if clicking the empty canvas (background)
     if (event.target === cy) {const pos = event.position;
         addPersonAt(pos);} });
 
+
 function addPersonAt(pos) {
-    const name = prompt("Name:");
-    if (!name) return;
+   const placeholderName = "?";
     // Use the click position, or default to center of view if pos is null
     const position = pos || cy.extent().center();
     const id = 'p' + Date.now();    recordState();
 cy.add([
         {
             group: 'nodes',
-            data: { id: id, type: 'person', name: name, color: '#4F46E5', notes: '' },
+            data: { id: id, type: 'person',  name: placeholderName, color: '#4F46E5', notes: '' },
             position: { x: position.x, y: position.y }
         },     {
             group: 'nodes',
             data: { id: id + '_n', type: 'note', text: '' },
-            position: { x: position.x, y: position.y + 35 }, 
+            position: { x: position.x, y: position.y + 35 },
             grabbable: false, selectable: false
         }
     ]);
     const personNode = cy.getElementById(id);
     cy.elements().unselect();
        showPersonEdit(personNode);
+  setTimeout(() => {
+        const nameInput = document.getElementById('edit-node-name');
+        nameInput.focus();
+        nameInput.select(); // Select the text so typing replaces it
+    }, 100);
     updatePlist();   updateElist();
  personNode.select();
 }
 
 
-    function addPerson() { const name = prompt("Name:"); 
-if(!name) return; const id='p'+Date.now(); recordState(); 
-const newElements = cy.add([{group:'nodes', data:{id:id, type:'person', name:name, color:'#4F46E5', notes:''}, position:{x:300,y:300}},
-{group:'nodes', data:{id:id+'_n', type:'note', text:''}, 
-Position:{x:300,y:335}, grabbable: false, selectable: false }]); 
-const personNode = newElements.filter(`[id="${id}"]`); 
- cy.elements().unselect();
-    personNode.select(); showPersonEdit(personNode);
-cy.animate({ center: { eles: personNode }, zoom: 1.0 }, { duration: 500, easing: 'ease-in-out-quint' });
-updatePlist(); updateElist(); }
-    
-function addGroup() { const name = prompt("Group Name:"); 
-if(!name) return; const id='g'+Date.now(); recordState(); 
-groups[id] = {name:name, members:[], visible:true, color:palette[Object.keys(groups).length % palette.length]}; groupOrder.push(id); updateUI(); 
-if (document.getElementById('edit-panel').style.display === 'block' && activePersonNode) 
+
+
+function addPerson() {
+    const id = 'p' + Date.now();
+    const placeholderName = "?";   
+    recordState();
+    // 2. Calculate center of current view)
+    const extent = cy.extent();
+    const posX = extent.x1 + (extent.x2 - extent.x1) / 2;
+    const posY = extent.y1 + (extent.y2 - extent.y1) / 2;
+    const newElements = cy.add([
+        {
+            group: 'nodes', 
+            data: { id: id, type: 'person', name: placeholderName, color: '#4F46E5', notes: '' },   position: { x: posX, y: posY }
+        },
+        {
+            group: 'nodes', 
+            data: { id: id + '_n', type: 'note', text: '' },
+            position: { x: posX, y: posY + 35 }, 
+            grabbable: false, 
+            selectable: false 
+        }
+    ]);
+    const personNode = newElements.filter(`[id="${id}"]`);
+    cy.elements().unselect();
+    personNode.select();   
+    showPersonEdit(personNode);   
+    // Focus the name input automatically
+    setTimeout(() => {
+        const nameInput = document.getElementById('edit-node-name');
+        nameInput.focus();
+        nameInput.select(); // Select the text so typing replaces it
+    }, 100);
+    cy.animate({ center: { eles: personNode }, zoom: 1.0 }, { duration: 500, easing: 'ease-in-out-quint' });    
+    updatePlist(); updateElist();
+}
+
+
+   
+function addGroup() { const name = prompt("Group Name:");
+if(!name) return; const id='g'+Date.now(); recordState();
+groups[id] = {name:name, members:[], visible:true, color:palette[Object.keys(groups).length % palette.length]}; groupOrder.push(id); updateUI();
+if (document.getElementById('edit-panel').style.display === 'block' && activePersonNode)
 { showPersonEdit(activePersonNode);} else {showGroupEdit(id);}
 }
-//Person edit 
+//Person edit
     function showPersonEdit(node) { activePersonNode = node;
-        hidePanels();  currentPanel = 'person'; document.getElementById('edit-panel').style.display='block'; 
-        document.getElementById('edit-node-name').value = node.data('name'); 
+        hidePanels();  currentPanel = 'person'; document.getElementById('edit-panel').style.display='block';
+        document.getElementById('edit-node-name').value = node.data('name');
 const notesArea = document.getElementById('node-notes'); notesArea.value = node.data('notes') || '';
-               const picker = document.getElementById('node-color-picker'); picker.innerHTML=''; 
-        palette.forEach(c=>{ const d=document.createElement('div'); d.className=`color-dot ${node.data('color')===c?'active':''}`; d.style.backgroundColor=c; d.onclick=()=>{recordState(); node.data('color',c); showPersonEdit(node); updatePlist();  updateElist();}; picker.appendChild(d); }); 
-        const container = document.getElementById('group-tags-container'); container.innerHTML=''; 
-const visBtn = document.getElementById('person-vis-toggle'); visBtn.innerText = node.visible() ? 'Hide Person' : 'Show Person'; 
+               const picker = document.getElementById('node-color-picker'); picker.innerHTML='';
+        palette.forEach(c=>{ const d=document.createElement('div'); d.className=`color-dot ${node.data('color')===c?'active':''}`; d.style.backgroundColor=c; d.onclick=()=>{recordState(); node.data('color',c); showPersonEdit(node); updatePlist();  updateElist();}; picker.appendChild(d); });
+        const container = document.getElementById('group-tags-container'); container.innerHTML='';
+const visBtn = document.getElementById('person-vis-toggle'); visBtn.innerText = node.visible() ? 'Hide Person' : 'Show Person';
 const nBtn = document.getElementById('note-vis-toggle');
 nBtn.disabled = node.visible() ? false: true;
-const noteSetting = node.data('noteVisibleSetting') !== false; 
+const noteSetting = node.data('noteVisibleSetting') !== false;
 nBtn.innerText = noteSetting ? 'Hide Notes' : 'Show Notes';
-        Object.keys(groups).forEach(id=>{ const t=document.createElement('span'); t.className=`tag ${groups[id].members.includes(node.id())?'selected':''}`; t.innerText=groups[id].name; t.onclick=()=>{ recordState(); if(groups[id].members.includes(node.id())) groups[id].members=groups[id].members.filter(m=>m!==node.id()); else groups[id].members.push(node.id()); showPersonEdit(node); drawGroups(); }; container.appendChild(t); }); 
+        Object.keys(groups).forEach(id=>{ const t=document.createElement('span'); t.className=`tag ${groups[id].members.includes(node.id())?'selected':''}`; t.innerText=groups[id].name; t.onclick=()=>{ recordState(); if(groups[id].members.includes(node.id())) groups[id].members=groups[id].members.filter(m=>m!==node.id()); else groups[id].members.push(node.id()); showPersonEdit(node); drawGroups(); }; container.appendChild(t); });
     }
+
+
 
 
 function togglePersonVis() {
@@ -576,12 +706,13 @@ const nBtn = document.getElementById('note-vis-toggle');
     if (person.visible()) { person.hide(); nBtn.disabled = true;
         if (note.length) note.hide();
     } else { person.show(); nBtn.disabled = false;
-const shouldShowNote = person.data('noteVisibleSetting') !== false; 
+const shouldShowNote = person.data('noteVisibleSetting') !== false;
         if (note.length && shouldShowNote) note.show(); }    document.getElementById('person-vis-toggle').innerText = person.visible() ? 'Hide Person' : 'Show Person'; updatePlist(); updateElist();}
 
+
 function updateNodeName() { recordState(); const n = activePersonNode; if(n) n.data('name', document.getElementById('edit-node-name').value); updatePlist();  updateElist();}
-    
-function updateNotes() { 
+   
+function updateNotes() {
     const n = activePersonNode; recordState();
  if(n) {
 const fullVal = document.getElementById('node-notes').value;
@@ -594,18 +725,20 @@ const initialLabel = fullVal.length > 10 ? fullVal.substring(0, 10) + "..." : fu
     };}
 }
 
+
 function togglePersonNoteVis() {
 if (!activePersonNode) return;
     recordState();
     const person = activePersonNode;
     const note = cy.getElementById(person.id() + '_n');
-let isCurrentlySetToVisible = person.data('noteVisibleSetting') !== false; 
+let isCurrentlySetToVisible = person.data('noteVisibleSetting') !== false;
 let newSetting = !isCurrentlySetToVisible; person.data('noteVisibleSetting', newSetting);
         if (note.length) {newSetting ? note.show() : note.hide()
            }  
 document.getElementById('note-vis-toggle').innerText = newSetting ? 'Hide Notes' : 'Show Notes'; updatePlist(); updateElist();}
 
- //Connection edit 
+
+ //Connection edit
 function showEdgeEdit(edge) {
     hidePanels();
     activeEdge = edge; currentPanel = 'edge';
@@ -623,14 +756,14 @@ recordState();
     targetBtn.innerText = targetNode.data('name');
     sourceBtn.style.opacity = sourceNode.visible() ? "1" : "0.5";
     targetBtn.style.opacity = targetNode.visible() ? "1" : "0.5";
-// --- NAVIGATION LOGIC --- 
+// --- NAVIGATION LOGIC ---
 sourceBtn.onclick = () => {
-if (sourceNode.visible()) 
-{ cy.elements().unselect();      sourceNode.select(); cy.animate({ center: { eles: sourceNode }, zoom: 1.5 }, { duration: 300 }); } showPersonEdit(sourceNode); }; 
-targetBtn.onclick = () => { 
-if (targetNode.visible()) 
-{ cy.elements().unselect();     targetNode.select(); cy.animate({ center: { eles: targetNode }, zoom: 1.5 }, { duration: 300 }); } 
-showPersonEdit(targetNode); }; 
+if (sourceNode.visible())
+{ cy.elements().unselect();      sourceNode.select(); cy.animate({ center: { eles: sourceNode }, zoom: 1.5 }, { duration: 300 }); } showPersonEdit(sourceNode); };
+targetBtn.onclick = () => {
+if (targetNode.visible())
+{ cy.elements().unselect();     targetNode.select(); cy.animate({ center: { eles: targetNode }, zoom: 1.5 }, { duration: 300 }); }
+showPersonEdit(targetNode); };
  // --- Generate Style Buttons ---
     const styleCont = document.getElementById('edge-style-container');
     styleCont.innerHTML = '';
@@ -673,30 +806,33 @@ showPersonEdit(targetNode); };
     updateElist();
 }
 
+
 function updateEdgeLabel() {  if(activeEdge) {
-        activeEdge.data('label', document.getElementById('edge-label-input').value); 
+        activeEdge.data('label', document.getElementById('edge-label-input').value);
         updateElist();   recordState(); }}
   function updateEdgeNotes() {  if(activeEdge) {
  activeEdge.data('notes', document.getElementById('edge-notes').value); recordState();}}
 
+
     function setEdgeStyle(s) { const e = cy.$(':selected'); if(e.isEdge()) e.data('lineStyle', s); updateElist();}
-    function setEdgeArrow(dir) { const e = cy.$(':selected'); if(e.isEdge()) { 
-e.data('arrow', (dir==='forward'||dir==='both'?'triangle':'none')); 
+    function setEdgeArrow(dir) { const e = cy.$(':selected'); if(e.isEdge()) {
+e.data('arrow', (dir==='forward'||dir==='both'?'triangle':'none'));
 e.data('sArrow', (dir==='backward'||dir==='both'?'triangle':'none')); updateElist();} }
 
+
   //Group edit    
-    function showGroupEdit(id) { 
+    function showGroupEdit(id) {
         hidePanels(); activeGroupId = id; currentPanel = 'group';
-document.getElementById('group-edit-panel').style.display = 'block'; 
+document.getElementById('group-edit-panel').style.display = 'block';
 recordState();
-        document.getElementById('group-name-input').value = groups[id].name; 
+        document.getElementById('group-name-input').value = groups[id].name;
 document.getElementById('group-notes').value = groups[id].notes ||'';
-        const picker = document.getElementById('group-color-picker'); picker.innerHTML=''; 
-        palette.forEach(c => { 
-const d = document.createElement('div'); 
-d.className = `color-dot ${groups[id].color === c ? 'active' : ''}`; 
+        const picker = document.getElementById('group-color-picker'); picker.innerHTML='';
+        palette.forEach(c => {
+const d = document.createElement('div');
+d.className = `color-dot ${groups[id].color === c ? 'active' : ''}`;
 d.style.backgroundColor = c; d.onclick = () => { recordState(); groups[id].color = c; showGroupEdit(id); updateUI(); drawGroups(); }; picker.appendChild(d); });
-        const container = document.getElementById('member-checklist-container'); container.innerHTML=''; 
+        const container = document.getElementById('member-checklist-container'); container.innerHTML='';
 const visBtn = document.getElementById('group-vis-toggle'); visBtn.innerText = groups[id].visible ? 'Hide' : 'Show';
         cy.nodes('[type="person"]').forEach(p => {
             const label = document.createElement('label'); label.className = 'check-item';
@@ -707,22 +843,26 @@ const visBtn = document.getElementById('group-vis-toggle'); visBtn.innerText = g
         cy.nodes().removeClass('highlighted'); const members = groups[id].members.map(mid => cy.getElementById(mid)); members.forEach(m => m.addClass('highlighted'));
     }
 
+
  function toggleMember(gid, pid) { recordState(); if(groups[gid].members.includes(pid)) groups[gid].members = groups[gid].members.filter(m=>m!==pid); else groups[gid].members.push(pid); drawGroups(); }
     function reorderGroup(dir) { if(!activeGroupId) return; groupOrder = groupOrder.filter(id => id !== activeGroupId); if(dir === 'front') groupOrder.push(activeGroupId); else groupOrder.unshift(activeGroupId); drawGroups(); }
 
+
 function toggleCurrentGroupVis() {
     // activeGroupId is already set by your showGroupEdit function
-    const id = activeGroupId; 
+    const id = activeGroupId;
     const group = groups[id];
     recordState();
        group.visible = !group.visible;
     // Apply visibility to the map
      updateUI(); drawGroups();
-    showGroupEdit(id); 
+    showGroupEdit(id);
 }
 
-  function updateGroupVisbtn() {const id = activeGroupId; 
+
+  function updateGroupVisbtn() {const id = activeGroupId;
 const visBtn = document.getElementById('group-vis-toggle'); visBtn.innerText = groups[id].visible ? 'Hide' : 'Show';}
+
 
   function updateGroupName() { if(activeGroupId) { groups[activeGroupId].name = document.getElementById('group-name-input').value; updateUI(); drawGroups(); } }
   function updateGroupNotes() { if(activeGroupId) { groups[activeGroupId].notes = document.getElementById('group-notes').value;  updateUI(); drawGroups(); } }
@@ -745,8 +885,9 @@ function deleteSelected() {
         target.remove(); }
     hidePanels(); updateUI();  updatePlist();  updateElist();}
 
- function hidePanels() { document.querySelectorAll('.panel').forEach(p=>p.style.display='none'); cy.nodes().removeClass('highlighted'); currentPanel = null;}   
-    
+
+ function hidePanels() { document.querySelectorAll('.panel').forEach(p=>p.style.display='none'); cy.nodes().removeClass('highlighted'); currentPanel = null;}  
+   
 //The Lists-tabs
 function openTab(evt, tabName) {
     //Hide all tab content
@@ -759,18 +900,22 @@ document.querySelectorAll(".tab-btn").forEach(btn => {
 document.getElementById(tabName).style.display = "block";
     evt.currentTarget.classList.add("active");
 if (tabName === 'tab-edge') {
-    updateElist(); }
-}
+    updateElist(); }}
 
-    function updateUI() { const list = document.getElementById('visibility-list'); list.innerHTML = ''; Object.keys(groups).forEach(id => { const div = document.createElement('div'); div.className = 'vis-item'; div.innerHTML = `<span onclick="showGroupEdit('${id}'); event.stopPropagation();" style="flex-grow:1; font-weight:700; color:${groups[id].color}">${groups[id].name}</span><span style="font-size:10px; color:#333; text-decoration:underline; font-weight:bold" onclick="toggleVis('${id}'); event.stopPropagation();">${groups[id].visible ? 'HIDE' : 'SHOW'}</span>`; list.appendChild(div); }); 
+
+
+
+    function updateUI() { const list = document.getElementById('visibility-list'); list.innerHTML = ''; Object.keys(groups).forEach(id => { const div = document.createElement('div'); div.className = 'vis-item';
+    div.innerHTML = `<span onclick="showGroupEdit('${id}'); event.stopPropagation();" style="flex-grow:1; font-weight:700; color:${groups[id].color}">${groups[id].name}</span>
+    <span style="font-size:10px; color:#333; text-decoration:underline; font-weight:bold" onclick="toggleVis('${id}'); event.stopPropagation();">${groups[id].visible ? 'HIDE' : 'SHOW'}</span>`;
+     list.appendChild(div); });
 }
 
     function toggleVis(id) { recordState(); groups[id].visible = !groups[id].visible; updateUI(); drawGroups(); updateGroupVisbtn();}
- 
 
 function updatePlist() {
     const listElement = document.getElementById('person-list');
-    listElement.innerHTML = ''; 
+    listElement.innerHTML = '';
     // Use the $ selector to find all 'person' nodes
     const people = cy.$('node[type="person"]');
     //  Loop through each person found
@@ -780,7 +925,7 @@ function updatePlist() {
   const isVisible = person.visible();
        // Create a list item (li)
         const li = document.createElement('li');
-        li.style.cssText = "padding: 8px; border-bottom: 1px solid #eee; cursor: pointer; display: flex; align-items: center; justify-content: space-between;";     
+        li.style.cssText = "padding: 8px; border-bottom: 1px solid #eee; cursor: pointer; display: flex; align-items: center; justify-content: space-between;";    
         // Add a small color dot next to the name
         li.innerHTML = `
 <div style="display: flex; align-items: center;">
@@ -794,12 +939,13 @@ function updatePlist() {
           if (person.visible()) {cy.elements().unselect();      person.select();          
             cy.animate({ center: { eles: person }, zoom: 1.5 }, { duration: 300 });}
 showPersonEdit(person); };
-const toggleBtn = li.querySelector('.toggle-btn'); 
+const toggleBtn = li.querySelector('.toggle-btn');
 toggleBtn.onclick = (e) => { e.stopPropagation(); togglePersonListVis(person.id());
 };
         listElement.appendChild(li);
     });
 }
+
 
 function togglePersonListVis(id) {
     const person = cy.getElementById(id);
@@ -807,20 +953,21 @@ function togglePersonListVis(id) {
     recordState();
 const nBtn = document.getElementById('note-vis-toggle');
         if (person.visible()) {
-        person.hide(); 
+        person.hide();
         if (note.length) note.hide();
     } else {
    person.show();
    if (note.length  && nBtn.innerText == 'Hide Notes' ) note.show();    }
     updatePlist(); updateElist(); updateUI();
 // REFRESH LOGIC: Only refresh the panel the user is actually looking at
- if (currentPanel === 'person' && activePersonNode && activePersonNode.id() === id) 
-{ showPersonEdit(person); } 
-else if (currentPanel === 'edge' && activeEdge) 
-{ const sId = activeEdge.source().id(); const tId = activeEdge.target().id(); if (id === sId || id === tId) { showEdgeEdit(activeEdge); } } 
-else if (currentPanel === 'group' && activeGroupId) { 
-// If the group panel shows a list of members, refresh it here 
+ if (currentPanel === 'person' && activePersonNode && activePersonNode.id() === id)
+{ showPersonEdit(person); }
+else if (currentPanel === 'edge' && activeEdge)
+{ const sId = activeEdge.source().id(); const tId = activeEdge.target().id(); if (id === sId || id === tId) { showEdgeEdit(activeEdge); } }
+else if (currentPanel === 'group' && activeGroupId) {
+// If the group panel shows a list of members, refresh it here
 showGroupEdit(activeGroupId); } }
+
 
  function updateElist() {
     const linklist = document.getElementById('connection-list');
@@ -831,23 +978,24 @@ const source = edge.source();
 const target = edge.target();
         const sourceName = source.data('name');
         const targetName = target.data('name');
-const sourceOpacity = source.visible() ? '1' : '0.3'; 
+const sourceOpacity = source.visible() ? '1' : '0.3';
 const targetOpacity = target.visible() ? '1' : '0.3';
-const lineStyle = edge.style('line-style'); 
- const arrowShape = edge.style('target-arrow-shape'); 
- const sArrowShape = edge.style('source-arrow-shape'); 
- let lineSymbol = "──"; 
-if (lineStyle === 'dashed') lineSymbol = "-----"; 
-if (lineStyle === 'dotted') lineSymbol = "⋯⋯"; 
- const arrowHeadright = (arrowShape && arrowShape !== 'none') ? "⊳" : "─ "; 
-const arrowHeadleft = (sArrowShape && sArrowShape !== 'none') ? " ⊲" : " ─"; 
+const lineStyle = edge.style('line-style');
+ const arrowShape = edge.style('target-arrow-shape');
+ const sArrowShape = edge.style('source-arrow-shape');
+ let lineSymbol = "──";
+if (lineStyle === 'dashed') lineSymbol = "-----";
+if (lineStyle === 'dotted') lineSymbol = "⋯⋯";
+ const arrowHeadright = (arrowShape && arrowShape !== 'none') ? "⊳" : "─ ";
+const arrowHeadleft = (sArrowShape && sArrowShape !== 'none') ? " ⊲" : " ─";
 const lli = document.createElement('li');
-        lli.style.cssText = "padding: 10px; border-bottom: 1px solid #eee; cursor: pointer; display: flex; align-items: center; font-size: 13px; color: #20124d;";     
+        lli.style.cssText = "padding: 10px; border-bottom: 1px solid #eee; cursor: pointer; display: flex; align-items: center; font-size: 13px; color: #20124d;";    
   lli.innerHTML = `
-   <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;"> 
-<span style="flex: 1; text-align: right; font-weight: 400; padding-right: 10px; opacity: ${sourceOpacity};">${sourceName}</span> 
-<div style="width: 80px; text-align: center; white-space: nowrap; color: #64748b;">&nbsp; ${arrowHeadleft}${lineSymbol}${arrowHeadright}&nbsp; </div> 
-<span style="flex: 1; text-align: left; font-weight: 400; padding-left: 10px; opacity: ${targetOpacity};">${targetName}</span> 
+   <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+<span style="flex: 1; text-align: right; font-weight: 400; padding-right: 10px; opacity: ${sourceOpacity};">${sourceName}</span>
+<div style="width: 80px; text-align: center; white-space: nowrap; color: #64748b;">&nbsp; ${arrowHeadleft}${lineSymbol}${arrowHeadright}&nbsp; </div>
+<span style="flex: 1; text-align: left; font-weight: 400; padding-left: 10px; opacity: ${targetOpacity};">${targetName}</span>
+</div>
         `;  
          lli.onclick = () => {
             if (edge.visible()) { cy.elements().unselect();
@@ -856,8 +1004,9 @@ const lli = document.createElement('li');
         linklist.appendChild(lli);
     });
 }
-  
+ 
   function exportMermaid() { let m = "flowchart LR\n"; cy.nodes('[type="person"]').forEach(n => { m += `    ${n.id()}["${n.data('name')}"]\n`; }); cy.edges().forEach(e => { let arrow = (e.data('arrow') !== 'none' && e.data('sArrow') !== 'none') ? "<-->" : (e.data('arrow') !== 'none' ? "-->" : (e.data('sArrow') !== 'none' ? "<--" : "---")); m += `    ${e.source().id()} ${arrow} ${e.target().id()}\n`; }); Object.keys(groups).forEach(id => { if(groups[id].members.length > 0) m += `    subgraph ${id}["${groups[id].name}"]\n        ${groups[id].members.join('\n        ')}\n    end\n`; }); const blob = new Blob([m], {type: "text/plain"}); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = "mermaid.md"; a.click(); }
+
 
 // Clear all
 function openClearModal() {
@@ -870,13 +1019,14 @@ function executeClearAll() {
     const shouldBackup = document.getElementById('backup-checkbox').checked;
     if (shouldBackup) {  saveData();}
     cy.elements().remove();
-    for (let key in groups) delete groups[key]; 
-   activePersonNode = null; activeEdge = null; activeGroupId = null; currentPanel = null; 
+    for (let key in groups) delete groups[key];
+   activePersonNode = null; activeEdge = null; activeGroupId = null; currentPanel = null;
     hidePanels();  updatePlist();    updateElist();
     if (typeof updateUI === 'function') updateUI();
     closeClearModal();
     if (typeof recordState === 'function') recordState();
 }
+
 
 window.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && document.getElementById('clear-modal').style.display === 'flex') {closeClearModal();}
@@ -890,5 +1040,4 @@ window.addEventListener('keydown', (e) => {
   </script>
 </body>
 </html>
-
 
