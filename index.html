@@ -7,6 +7,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.26.0/cytoscape.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/webcola@3.4.0/WebCola/cola.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/cytoscape-cola@2.5.1/cytoscape-cola.min.js"></script>
+    <link rel="manifest" href="/manifest.json">
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { display: flex; height: 100vh; font-family: -apple-system, sans-serif; background: #f8fafc; overflow: hidden; }
@@ -399,6 +400,9 @@ window.onload = () => {
         loadFromMobile(saved); 
     }
 };
+    if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js');
+    }
 
 function runAutoLayout() { cy.layout({ name: 'cola', infinite: false, fit: true, padding: 50, nodeSpacing: 100 }).run(); }
 
