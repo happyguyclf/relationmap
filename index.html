@@ -22,7 +22,6 @@
         #sidebar.collapsed { transform: translateX(-320px); margin-right: -320px; }
 
 
-        /* FLOATING TOGGLE */
         #toggle-tab {
             position: fixed; left: 320px; top: 50%; transform: translateY(-50%);
             width: 30px; height: 70px; background: #4F46E5; border-radius: 0 8px 8px 0;
@@ -65,10 +64,6 @@
     pointer-events: none;
     letter-spacing: 0.5px; text-transform: uppercase;
 }
-
-
-
-
         #search-input { width: 100%; padding: 10px; border: 2px solid #f1f5f9; border-radius: 8px; margin-bottom: 15px; font-size: 13px; outline: none; }
 
 
@@ -187,8 +182,6 @@ display: flex; align-items: center; justify-content: center;line-height: 1; padd
         </div>
 
 
-
-
         <div id="edge-panel" class="panel" style=" background:#fff7ed;">
 <div style="display:flex; justify-content: center; margin-top:5px;">
   <div id="edge-participants" style="width: atuo; padding: 8px; background: #f8fafc; border-radius: 6px; border: 1px solid #e2e8f0; font-size: 13px; display: flex; align-items: center; justify-content: space-between;">
@@ -227,8 +220,6 @@ display: flex; align-items: center; justify-content: center;line-height: 1; padd
 </div>
      </div>
            
-
-
 <div id="itemlist-panel">
     <div class="tab-bar">
         <button class="tab-btn active" onclick="openTab(event, 'tab-group')">Groups</button>
@@ -382,7 +373,7 @@ let activeEdge = null;
     let groupOrder = [];
     const canvas = document.getElementById('overlay-canvas');
     const ctx = canvas.getContext('2d');
-    const palette = ['#4F46E5', '#10B981', '#3B82F6', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#06B6D4', '#FFFFFF'];
+    const palette = ['#4F46E5', '#10B981', '#3B82F6', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#06B6D4', '#FFFFFF', '#000000'];
 
 
     const cy = cytoscape({
@@ -465,8 +456,6 @@ window.onload = () => {
         loadFromMobile(saved);
     }
 };
-
-
 
 
     function recordState() { history.push(JSON.stringify({ elements: cy.elements().map(e=>({group:e.isNode()?'nodes':'edges', data:e.data(), position:e.position()})), groups })); if(history.length > 20) history.shift(); }
@@ -631,8 +620,6 @@ cy.add([
     updatePlist();   updateElist();
  personNode.select();
 }
-
-
 
 
 function addPerson() {
@@ -911,7 +898,10 @@ if (tabName === 'tab-edge') {
      list.appendChild(div); });
 }
 
+
     function toggleVis(id) { recordState(); groups[id].visible = !groups[id].visible; updateUI(); drawGroups(); updateGroupVisbtn();}
+ 
+
 
 function updatePlist() {
     const listElement = document.getElementById('person-list');
@@ -995,9 +985,8 @@ const lli = document.createElement('li');
 <span style="flex: 1; text-align: right; font-weight: 400; padding-right: 10px; opacity: ${sourceOpacity};">${sourceName}</span>
 <div style="width: 80px; text-align: center; white-space: nowrap; color: #64748b;">&nbsp; ${arrowHeadleft}${lineSymbol}${arrowHeadright}&nbsp; </div>
 <span style="flex: 1; text-align: left; font-weight: 400; padding-left: 10px; opacity: ${targetOpacity};">${targetName}</span>
-</div>
-        `;  
-         lli.onclick = () => {
+</div>       `;  
+      lli.onclick = () => {
             if (edge.visible()) { cy.elements().unselect();
             edge.select();
             cy.animate({ center: { eles: edge }, zoom: 1.5 }, { duration: 350 }); } showEdgeEdit(edge);    };
@@ -1011,10 +1000,8 @@ const lli = document.createElement('li');
 // Clear all
 function openClearModal() {
     document.getElementById('clear-modal').style.display = 'flex';}
-
 function closeClearModal() {
     document.getElementById('clear-modal').style.display = 'none';}
-
 function executeClearAll() {
     const shouldBackup = document.getElementById('backup-checkbox').checked;
     if (shouldBackup) {  saveData();}
