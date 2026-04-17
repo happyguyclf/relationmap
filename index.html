@@ -7,6 +7,14 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.26.0/cytoscape.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/webcola@3.4.0/WebCola/cola.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/cytoscape-cola@2.5.1/cytoscape-cola.min.js"></script>
+<link rel="manifest" href="manifest.json">
+<meta name="apple-mobile-web-app-capable" content="yes"> 
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"> 
+<link rel="apple-touch-icon" href="icon-512.png"> 
+<script> if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js') .then(() => console.log("Service Worker Registered")); }
+ </script>
+
+
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { display: flex; height: 100vh; font-family: -apple-system, sans-serif; background: #f8fafc; overflow: hidden; }
@@ -130,8 +138,6 @@
     from { opacity: 0; }
     to { opacity: 1; }    }
 .info-toolCredit {margin-bottom: 4px; font-size: 12px;}
-
-
     </style>
 </head>
 
@@ -139,7 +145,7 @@
 <body>
 <div id="sidebar">
     <div class="sidebar-content">
-        <h1>RelationMap v9.1</h1>    
+        <h1>RelationMap v9.2</h1>    
  
    <button id="info-btn" onclick="toggleInfoPopup()" style="
         position: absolute;
@@ -312,15 +318,15 @@ display: flex; align-items: center; justify-content: center;line-height: 1; padd
     <p>This tool is built using several powerful open-source libraries that make complex data visualization possible:</p>    
     <ul style="list-style-type: none; padding-left: 0;">
         <li class="info-toolCredit">
-            <strong><a href="https://js.cytoscape.org/" target="_blank" style="color: #007bff; text-decoration: none;">Cytoscape.js</a></strong>
+            <strong><a href="https://js.cytoscape.org/" target="_blank" rel="noopener noreferrer" style="color: #007bff; text-decoration: none;">Cytoscape.js</a></strong>
             <span style="color: #666;">: Our core graph theory engine (LGPL 2.1).</span>
         </li>        
         <li class="info-toolCredit">
-            <strong><a href="https://ialab.it.monash.edu/webcola/" target="_blank" style="color: #007bff; text-decoration: none;">WebCola</a></strong>
+            <strong><a href="https://ialab.it.monash.edu/webcola/" target="_blank" rel="noopener noreferrer" style="color: #007bff; text-decoration: none;">WebCola</a></strong>
             <span style="color: #666;">: Provides the physics-based "constraint-based" layout (MIT License).</span>
         </li>        
         <li class="info-toolCredit">
-            <strong><a href="https://github.com/cytoscape/cytoscape.js-cola" target="_blank" style="color: #007bff; text-decoration: none;">cytoscape-cola</a></strong>
+            <strong><a href="https://github.com/cytoscape/cytoscape.js-cola" target="_blank" rel="noopener noreferrer" style="color: #007bff; text-decoration: none;">cytoscape-cola</a></strong>
             <span style="color: #666;">: The bridge connecting the core engine with the layout physics (MIT License).</span>
         </li>
     </ul>    
@@ -496,7 +502,7 @@ else { lastFunc = func; lastContext = context;
         }
     }
 }
-const throttledDrawGroups = throttle(drawGroups, 16); // ~60fps
+const throttledDrawGroups = throttle(drawGroups, 10); // ~60fps
     function drawGroups() {
         canvas.width = canvas.clientWidth; canvas.height = canvas.clientHeight;
         ctx.clearRect(0,0,canvas.width,canvas.height); groupHulls = [];
