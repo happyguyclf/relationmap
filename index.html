@@ -15,6 +15,8 @@
  </script>
 
 
+
+
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { display: flex; height: 100vh; font-family: -apple-system, sans-serif; background: #f8fafc; overflow: hidden; }
@@ -502,7 +504,7 @@ else { lastFunc = func; lastContext = context;
         }
     }
 }
-const throttledDrawGroups = throttle(drawGroups, 10); // ~60fps
+const throttledDrawGroups = throttle(drawGroups, 20); // ~60fps
     function drawGroups() {
         canvas.width = canvas.clientWidth; canvas.height = canvas.clientHeight;
         ctx.clearRect(0,0,canvas.width,canvas.height); groupHulls = [];
@@ -836,7 +838,6 @@ const visBtn = document.getElementById('group-vis-toggle'); visBtn.innerText = g
         cy.nodes().removeClass('highlighted'); const members = groups[id].members.map(mid => cy.getElementById(mid)); members.forEach(m => m.addClass('highlighted'));
     }
 
-
  function toggleMember(gid, pid) { recordState(); if(groups[gid].members.includes(pid)) groups[gid].members = groups[gid].members.filter(m=>m!==pid); else groups[gid].members.push(pid); drawGroups(); }
     function reorderGroup(dir) { if(!activeGroupId) return; groupOrder = groupOrder.filter(id => id !== activeGroupId); if(dir === 'front') groupOrder.push(activeGroupId); else groupOrder.unshift(activeGroupId); drawGroups(); }
 
@@ -1019,8 +1020,6 @@ function executeClearAll() {
     closeClearModal();
     if (typeof recordState === 'function') recordState();
 }
-
-
 window.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && document.getElementById('clear-modal').style.display === 'flex') {closeClearModal();}
 });
@@ -1033,4 +1032,5 @@ window.addEventListener('keydown', (e) => {
   </script>
 </body>
 </html>
+
 
