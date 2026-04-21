@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RelationMap v9.8</title>
+    <title>RelationMap v9.9</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.26.0/cytoscape.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/webcola@3.4.0/WebCola/cola.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/cytoscape-cola@2.5.1/cytoscape-cola.min.js"></script>
@@ -147,7 +147,7 @@
     right: 20px;
 width: auto;
     z-index: 100;
-    padding: 10px 20px;  background: #ffffff; color: #1e293b;
+    padding: 10px 15px;  background: rgba(255, 255, 255, 0.9); color: #1e293b;
  font-size: 11px; font-weight: 700;
             border: 1px solid #cbd5e1; border-radius: 5px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.05);
@@ -215,7 +215,7 @@ width: auto;
         <header>
             <h1 style="text-transform: uppercase;">My Gallery</h1>
             <div class="actions">
-                <button onclick="createNewMap()" class="btn-primary">+ New Map</button>
+                <button onclick="createNewMap()" style= "background: #10B981; color: white" class="btn-primary">+ New Map</button>
                 <button onclick="toggleDashboard(false)">Close</button>
             </div>
         </header>
@@ -351,9 +351,9 @@ display: flex; align-items: center; justify-content: center;line-height: 1; padd
     <div class="save-indicator" id="save-status">Cloud Sync Ready</div>
     <div id="cy"></div>
     <canvas id="overlay-canvas"></canvas>
-    <div class="credits">RelationMap v9.8 Created by HappyGuy119</div>
+    <div class="credits">RelationMap v9.9 Created by HappyGuy119</div>
     <div class="map-controls">
-        <button class="mini-btn" onclick="runAutoLayout()">Physics Spread</button>
+        <button class="mini-btn" onclick="runAutoLayout()">Auto Layout</button>
         <button class="mini-btn" onclick="cy.fit(null, 50)">Zoom to Fit</button>
     </div>
 </div>
@@ -483,75 +483,6 @@ style: { 'width': 60, 'height': 60, 'background-color': 'data(color)', 'label': 
         ]
     });
 //data management
-// Initialize ID
-let currentMapId = localStorage.getItem('active_map_id') || 'map_' + Date.now();
-
-
-// Toggle Dashboard View
-function toggleDashboard(show) {
-    const dash = document.getElementById('dashboard');
-    if (show) {
-        renderMapList();
-        dash.classList.remove('hidden');
-    } else {
-        dash.classList.add('hidden');
-    }
-}
-
-
-// Search localStorage for all maps and show them as cards
-function renderMapList() {
-    const grid = document.getElementById('map-grid');
-    grid.innerHTML = ''; // Clear current list
-    const keys = Object.keys(localStorage).filter(k => k.startsWith('map_'));
-    keys.forEach(key => {
-        const rawData = localStorage.getItem(key);
-        const mapData = JSON.parse(rawData);
-        const id = key.replace('map_', '');
-        
-        const card = document.createElement('div');
-        card.className = 'map-card';
-        card.innerHTML = `
-            <h3>${mapData.title || 'Untitled Map'}</h3>
-            <p>ID: ${id}</p>
-            <button onclick="switchMap('${key}')">Open</button>
-            <button onclick="deleteMap('${key}')" style="background:#ff4d4d; color:white; border:none; margin-top:5px">Delete</button>
-        `;
-        grid.appendChild(card);
-    });
-}
-
-
-function switchMap(fullKey) {
-    currentMapId = fullKey.replace('map_', '');
-    localStorage.setItem('active_map_id', currentMapId);
-    
-    const saved = localStorage.getItem(fullKey);
-    processMapJSON(saved); // Uses your existing function!
- activePersonNode = null; activeEdge = null; activeGroupId = null; currentPanel = null; 
-    hidePanels();    toggleDashboard(false);
-}
-
-
-function createNewMap() {
-    if(confirm("Start a new map? Your current work is auto-saved.")) {
-        currentMapId = 'map_' + Date.now();
-        localStorage.setItem('active_map_id', currentMapId);
-        cy.elements().remove(); // Clear canvas
-  activePersonNode = null; activeEdge = null; activeGroupId = null; currentPanel = null;      hidePanels();  updatePlist();    updateElist();    groups = {}; // Reset your groups
-updateUI(); 
-        autoSave(); // Create the first save for the new ID
-        toggleDashboard(false);
-    }
-}
-
-
-function deleteMap(fullKey) {
-    if(confirm("Delete this map forever?")) {
-        localStorage.removeItem(fullKey);
-        renderMapList();
-    }
-}
 
 
 let saveTimeout;
@@ -620,7 +551,7 @@ function saveData() {
     const blob = new Blob([dataString], {type: "application/json"});
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    a.download = `mymap_${new Date().getTime()}.json`;
+    a.download = `relationmap_${document.getElementById('map-title').innerText}.json`;
     a.click();}
 
 
@@ -639,6 +570,80 @@ window.onload = () => {
         processMapJSON(saved);
     }
 };
+
+
+//dashboard
+// Initialize ID
+let currentMapId = localStorage.getItem('active_map_id') || 'map_' + Date.now();
+
+
+// Toggle Dashboard View
+function toggleDashboard(show) {
+    const dash = document.getElementById('dashboard');
+    if (show) {
+        renderMapList();
+        dash.classList.remove('hidden');
+    } else {
+        dash.classList.add('hidden');
+    }
+}
+
+
+// Search localStorage for all maps and show them as cards
+function renderMapList() {
+    const grid = document.getElementById('map-grid');
+    grid.innerHTML = ''; // Clear current list
+    const keys = Object.keys(localStorage).filter(k => k.startsWith('map_'));
+    keys.forEach(key => {
+        const rawData = localStorage.getItem(key);
+        const mapData = JSON.parse(rawData);
+        const id = key.replace('map_', '');
+        
+        const card = document.createElement('div');
+        card.className = 'map-card';
+        card.innerHTML = `
+            <h3>${mapData.title || 'Untitled Map'}</h3>
+            <p>ID: ${id}</p>
+            <button onclick="switchMap('${key}')">Open</button>
+            <button onclick="deleteMap('${key}')" style="background:#ff4d4d; color:white; border:none; margin-top:5px">Delete</button>
+        `;
+        grid.appendChild(card);
+    });
+}
+
+
+function switchMap(fullKey) {
+    currentMapId = fullKey.replace('map_', '');
+    localStorage.setItem('active_map_id', currentMapId);
+    
+    const saved = localStorage.getItem(fullKey);
+    processMapJSON(saved); // Uses your existing function!
+ activePersonNode = null; activeEdge = null; activeGroupId = null; currentPanel = null; 
+    hidePanels();    toggleDashboard(false);
+}
+
+
+function createNewMap() {
+    if(confirm("Start a new map? Your current work is auto-saved.")) {
+        currentMapId = 'map_' + Date.now();
+        localStorage.setItem('active_map_id', currentMapId);
+        cy.elements().remove(); // Clear canvas
+  activePersonNode = null; activeEdge = null; activeGroupId = null; currentPanel = null;      hidePanels();  updatePlist();    updateElist();    groups = {}; updateUI(); 
+ const title = document.getElementById('map-title');
+title.innerText = "Untitled Map";
+title.focus(); 
+        autoSave(); // Create the first save for the new ID
+        toggleDashboard(false); title.select();
+    }
+}
+
+
+function deleteMap(fullKey) {
+    if(confirm("Delete this map forever?")) {
+        localStorage.removeItem(fullKey);
+        renderMapList();
+    }
+}
 
 
 //Edit title
