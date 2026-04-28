@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RelationMap v9.9</title>
+    <title>RelationMap v10.1</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.26.0/cytoscape.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/webcola@3.4.0/WebCola/cola.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/cytoscape-cola@2.5.1/cytoscape-cola.min.js"></script>
@@ -351,7 +351,7 @@ display: flex; align-items: center; justify-content: center;line-height: 1; padd
     <div class="save-indicator" id="save-status">Cloud Sync Ready</div>
     <div id="cy"></div>
     <canvas id="overlay-canvas"></canvas>
-    <div class="credits">RelationMap v9.9 Created by HappyGuy119</div>
+    <div class="credits">RelationMap v10.1 Created by HappyGuy119</div>
     <div class="map-controls">
         <button class="mini-btn" onclick="runAutoLayout()">Auto Layout</button>
         <button class="mini-btn" onclick="cy.fit(null, 50)">Zoom to Fit</button>
@@ -476,6 +476,12 @@ let activeEdge = null;
 style: { 'width': 60, 'height': 60, 'background-color': 'data(color)', 'label': 'data(name)', 'text-valign': 'center', 'text-halign': 'center', 'color': '#ffffff', 'font-size': '13px', 'font-weight': 'bold', 'text-wrap': 'wrap', 'text-max-width': '55px', 'text-outline-color': '#000000', 'text-outline-width': '1.2px', 'z-index': 9 }},
             { selector: 'node[type="note"]', style: { 'width': 60, 'height': 10, 'shape': 'rectangle', 'label': 'data(text)', 'font-size': '10px', 'color': '#64748b', 'text-valign': 'center', 'text-halign': 'center', 'background-opacity': 0, 'z-index': 10 }},
             { selector: 'edge', style: { 'width': 2, 'line-color': '#94a3b8', 'curve-style': 'bezier', 'target-arrow-shape': 'data(arrow)', 'source-arrow-shape': 'data(sArrow)', 'line-style': 'data(lineStyle)', 'label': 'data(label)', 'font-size': '10px', 'edge-text-rotation': 'autorotate', 'text-margin-y': -10, 'text-background-opacity': 0 }},
+
+
+{selector: '.temp-edge-style', style: { 'width': 3, 'line-color': '#4F46E5',  'line-style': 'dashed', 'curve-style': 'bezier',  'target-arrow-shape': 'triangle',   'target-arrow-color': '#4F46E5',   'z-index': 10000,  'opacity': 1,  'events': 'no'
+    }
+},
+{ selector: '.is-stretching', style: {'width': 50, 'height': 50 } }, 
 
 
             { selector: ':selected', style: { 'border-width': 4, 'border-color': '#00ff00' }},
@@ -605,7 +611,7 @@ function renderMapList() {
             <h3>${mapData.title || 'Untitled Map'}</h3>
             <p>ID: ${id}</p>
             <button onclick="switchMap('${key}')">Open</button>
-            <button onclick="deleteMap('${key}')" style="background:#ff4d4d; color:white; border:none; margin-top:5px">Delete</button>
+            <button onclick="deleteMap('${key}')" style="background: white; color:#ff4d4d; border:2px solid #fecaca; border-radius:6px; margin-top:5px">Delete</button>
         `;
         grid.appendChild(card);
     });
@@ -718,6 +724,8 @@ else { lastFunc = func; lastContext = context;
     }
 }
 const throttledDrawGroups = throttle(drawGroups, 16); // ~60fps
+
+
     function drawGroups() {
         canvas.width = canvas.clientWidth; canvas.height = canvas.clientHeight;
         ctx.clearRect(0,0,canvas.width,canvas.height); groupHulls = [];
@@ -771,6 +779,154 @@ cy.on('add', 'node[type="note"]', (e) => {
 cy.nodes('[type="note"]').forEach(n => n.grabbable(false));
 
 
+let dragSourceNode = null;
+let tempTargetNode = null;
+let tempEdge = null;
+let isLongPressDragging = false;
+let longPressTimer = null;
+
+
+// 1. Monitor the start of a click/touch
+cy.on('tapstart', 'node[type="person"]', (e) => {
+    const node = e.target;
+    
+    // Start a timer for 500ms
+ longPressTimer = setTimeout(() => {
+    dragSourceNode = node;
+    const pos = e.position;
+    isLongPressDragging = true;
+    dragSourceNode.ungrabify();
+
+
+if (navigator.vibrate) { navigator.vibrate(50); } 
+ dragSourceNode.addClass('is-stretching' ); 
+   // 1. Add node with CLASS
+    tempTargetNode = cy.add({
+        group: 'nodes',
+        data: { id: 'tempGhost' },
+        position: { x: pos.x, y: pos.y }, style: {
+        'background-color': '#4F46E5',
+        'width': 10,
+        'height': 10,
+        'opacity': 0.3, 
+        'events': 'no',
+        'z-index': 9999
+    }
+
+
+    });
+
+
+    // 2. Add edge with CLASS
+    tempEdge = cy.add({
+        group: 'edges',
+        data: { 
+            id: 'tempEdge', 
+            source: dragSourceNode.id(), 
+            target: 'tempGhost' 
+        },
+        classes: 'temp-edge-style' // <--- Use class
+    });
+}, 500);}); 
+
+
+cy.on('tapdrag', (e) => {
+    if (!isLongPressDragging || !tempTargetNode) return;
+    
+    // Update position
+    tempTargetNode.position(e.position);
+    
+    // FORCE RENDER: Sometimes the edge won't update its curve 
+    // unless the source or target 'moves' in a way the renderer notices.
+    tempTargetNode.emit('position'); 
+});
+
+
+
+
+// 2. If the user moves too early or lets go, cancel the timer
+cy.on('tapend drag', () => {
+    if (longPressTimer) {
+        clearTimeout(longPressTimer);
+        longPressTimer = null;
+    }
+});
+
+
+// 3. Update the stretching edge
+
+
+
+
+// 4. Final Release logic
+cy.on('tapend', (e) => {
+    if (!isLongPressDragging) return;
+
+
+    const endPos = e.position;
+    // Check if we are over a different person node
+    const targetNode = (e.target !== cy && e.target.isNode() && e.target.data('type') === 'person' && e.target.id() !== dragSourceNode.id()) 
+                       ? e.target 
+                       : null;
+
+
+    // Cleanup
+dragSourceNode.removeClass('is-stretching'); 
+    if(tempEdge) cy.remove(tempEdge);
+    if(tempTargetNode) cy.remove(tempTargetNode);
+    if(dragSourceNode) dragSourceNode.grabify();
+
+
+    if (targetNode) {
+        // Create edge to existing person
+        recordState();
+        const newEdge = cy.add({
+            group: 'edges',
+            data: { 
+                source: dragSourceNode.id(), target: targetNode.id(), 
+                arrow: 'triangle', sArrow: 'none', lineStyle: 'dotted' 
+            }
+        });
+        updateElist();
+        showEdgeEdit(newEdge[0]);
+    } else if (e.target === cy) {
+        // Create new person + edge
+        recordState();
+        const newId = 'p' + Date.now();
+        const newElems = cy.add([
+            {
+                group: 'nodes',
+                data: { id: newId, type: 'person', name: '?', color: '#4F46E5' },
+                position: { x: endPos.x, y: endPos.y }
+            },
+            {
+                group: 'edges',
+                data: { source: dragSourceNode.id(), target: newId, arrow: 'triangle', lineStyle: 'dotted' }
+            }
+        ]);
+   const personNode = cy.getElementById(newId);
+    cy.elements().unselect();
+       showPersonEdit(personNode);
+  setTimeout(() => {
+        const nameInput = document.getElementById('edit-node-name');
+        nameInput.focus();
+        nameInput.select(); // Select the text so typing replaces it
+    }, 100);
+        updatePlist();
+        updateElist();
+        showPersonEdit(newElems[0]);
+    }
+
+
+    isLongPressDragging = false;
+    dragSourceNode = null;
+});
+
+
+
+
+
+
     cy.on('tap', (e) => {
         if(e.target === cy) {
             const pos = e.renderedPosition;
@@ -791,7 +947,7 @@ cy.nodes('[type="note"]').forEach(n => n.grabbable(false));
                 if(selectedNodes.length === 2) { recordState(); const newEdge = cy.add({group:'edges', data:{ source:selectedNodes[0], target:selectedNodes[1], arrow:'triangle', sArrow:'none', lineStyle:'dotted', label:'', notes:''}}); toggleConnectionMode(); updateElist(); showEdgeEdit(newEdge[0]);}
             } else { showPersonEdit(ele); };
         }
-    });
+    });     
 
 
     function toggleConnectionMode() { connectionMode = !connectionMode; selectedNodes = [];
@@ -819,10 +975,8 @@ function addPersonAt(pos) {
     const position = pos || cy.extent().center();
     const id = 'p' + Date.now();    recordState();
 cy.add([
-        {
-            group: 'nodes',
-            data: { id: id, type: 'person',  name: placeholderName, color: '#4F46E5', notes: '' },
-            position: { x: position.x, y: position.y }
+        { group: 'nodes',
+          data: { id: id, type: 'person',  name: placeholderName, color: '#4F46E5', notes: '' }, position: { x: position.x, y: position.y }
         },     {
             group: 'nodes',
             data: { id: id + '_n', type: 'note', text: '' },
@@ -1020,12 +1174,21 @@ function updateEdgeLabel() {  if(activeEdge) {
  activeEdge.data('notes', document.getElementById('edge-notes').value); recordState();}}
 
 
-    function setEdgeStyle(s) { const e = cy.$(':selected'); if(e.isEdge()) e.data('lineStyle', s); updateElist();}
-    function setEdgeArrow(dir) { const e = cy.$(':selected'); if(e.isEdge()) {
-e.data('arrow', (dir==='forward'||dir==='both'?'triangle':'none'));
-e.data('sArrow', (dir==='backward'||dir==='both'?'triangle':'none')); updateElist();} }
+ function setEdgeStyle(s) {
+    if (activeEdge && activeEdge.isEdge()) {
+        recordState();
+        activeEdge.data('lineStyle', s);
+        updateElist();   showEdgeEdit(activeEdge);     }
+}
 
 
+function setEdgeArrow(dir) {
+    if (activeEdge && activeEdge.isEdge()) {
+        recordState();
+        activeEdge.data('arrow', (dir === 'forward' || dir === 'both' ? 'triangle' : 'none'));
+        activeEdge.data('sArrow', (dir === 'backward' || dir === 'both' ? 'triangle' : 'none'));
+        updateElist(); showEdgeEdit(activeEdge);    }
+}
   //Group edit    
     function showGroupEdit(id) {
         hidePanels(); activeGroupId = id; currentPanel = 'group';
@@ -1207,7 +1370,7 @@ const lli = document.createElement('li');
             edge.select();
             cy.animate({ center: { eles: edge }, zoom: 1.5 }, { duration: 350 }); } showEdgeEdit(edge);    };
         linklist.appendChild(lli);
-    });
+    }); autoSave();
 }
  
   function exportMermaid() { let m = "flowchart LR\n"; cy.nodes('[type="person"]').forEach(n => { m += `    ${n.id()}["${n.data('name')}"]\n`; }); cy.edges().forEach(e => { let arrow = (e.data('arrow') !== 'none' && e.data('sArrow') !== 'none') ? "<-->" : (e.data('arrow') !== 'none' ? "-->" : (e.data('sArrow') !== 'none' ? "<--" : "---")); m += `    ${e.source().id()} ${arrow} ${e.target().id()}\n`; }); Object.keys(groups).forEach(id => { if(groups[id].members.length > 0) m += `    subgraph ${id}["${groups[id].name}"]\n        ${groups[id].members.join('\n        ')}\n    end\n`; }); const blob = new Blob([m], {type: "text/plain"}); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = "mermaid.md"; a.click(); }
