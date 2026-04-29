@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RelationMap v10.1</title>
+    <title>RelationMap v10.3</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.26.0/cytoscape.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/webcola@3.4.0/WebCola/cola.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/cytoscape-cola@2.5.1/cytoscape-cola.min.js"></script>
@@ -13,10 +13,6 @@
 <link rel="apple-touch-icon" href="iconApp.png"> 
 <script> if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js') .then(() => console.log("Service Worker Registered")); }
  </script>
-
-
-
-
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { display: flex; height: 100vh; font-family: -apple-system, sans-serif; background: #f8fafc; overflow: hidden; }
@@ -78,9 +74,6 @@
 
 
         .section-label { font-size: 10px; font-weight: 800; color: #94a3b8; text-transform: uppercase; margin: 18px 0 6px; }
-
-
-
 
         button { width: 100%; padding: 8px; margin-bottom: 5px; border-radius: 6px; border: 1px solid #e2e8f0; cursor: pointer; font-weight: 600; font-size: 12px; transition: 0.2s; }
         .btn-main { background: #4F46E5; color: white; border: none; }
@@ -351,7 +344,7 @@ display: flex; align-items: center; justify-content: center;line-height: 1; padd
     <div class="save-indicator" id="save-status">Cloud Sync Ready</div>
     <div id="cy"></div>
     <canvas id="overlay-canvas"></canvas>
-    <div class="credits">RelationMap v10.1 Created by HappyGuy119</div>
+    <div class="credits">RelationMap v10.3 Created by HappyGuy119</div>
     <div class="map-controls">
         <button class="mini-btn" onclick="runAutoLayout()">Auto Layout</button>
         <button class="mini-btn" onclick="cy.fit(null, 50)">Zoom to Fit</button>
@@ -458,7 +451,7 @@ function closePopupOnClickOutside(event) {
 
 
 let activePersonNode = null;
-    let connectionMode = false, selectedNodes = [], history = [], groups = {}, activeGroupId = null;
+    let connectionMode = false, selectedNodes = [], undoHistory = [], groups = {}, activeGroupId = null;
 let currentPanel = null;
 let activeEdge = null;
 
@@ -655,15 +648,11 @@ function deleteMap(fullKey) {
 //Edit title
 function updateMapTitle() {
     const titleElement = document.getElementById('map-title');
-    const newTitle = titleElement.innerText.trim();
-    
+    const newTitle = titleElement.innerText.trim();   
     if (newTitle === "") {
         titleElement.innerText = "Untitled Map"; // Don't allow empty titles
     }
-    
-    // Save to your data object and trigger autoSave
-    autoSave(); 
-    
+    autoSave();    
     // If your Dashboard is open, refresh the list to show the new name
     if (!document.getElementById('dashboard').classList.contains('hidden')) {
         renderMapList();
@@ -682,12 +671,12 @@ function handleTitleEnter(e) {
 
 
 
-    function recordState() { history.push(JSON.stringify({ elements: cy.elements().map(e=>({group:e.isNode()?'nodes':'edges', data:e.data(), position:e.position()})), groups })); if(history.length > 20) history.shift(); }
+    function recordState() { undoHistory.push(JSON.stringify({ elements: cy.elements().map(e=>({group:e.isNode()?'nodes':'edges', data:e.data(), position:e.position()})), groups })); if(undoHistory.length > 20) undoHistory.shift(); }
 
 
 
 
-  function undo() { if(history.length) { const s = JSON.parse(history.pop()); cy.elements().remove(); cy.add(s.elements); groups = s.groups; groupOrder = Object.keys(groups); updateUI(); syncNotes(); drawGroups(); updatePlist();  updateElist(); } }
+  function undo() { if(undoHistory.length) { const s = JSON.parse(undoHistory.pop()); cy.elements().remove(); cy.add(s.elements); groups = s.groups; groupOrder = Object.keys(groups); updateUI(); syncNotes(); drawGroups(); updatePlist();  updateElist(); } }
 
 
 function runAutoLayout() {
@@ -779,118 +768,128 @@ cy.on('add', 'node[type="note"]', (e) => {
 cy.nodes('[type="note"]').forEach(n => n.grabbable(false));
 
 
+//create by press and stretch
 let dragSourceNode = null;
 let tempTargetNode = null;
 let tempEdge = null;
 let isLongPressDragging = false;
 let longPressTimer = null;
+const LONG_PRESS_MOVE_THRESHOLD = 10; // pixels — allow tiny finger drift
+let tapStartPos = null;
 
 
-// 1. Monitor the start of a click/touch
 cy.on('tapstart', 'node[type="person"]', (e) => {
     const node = e.target;
-    
-    // Start a timer for 500ms
- longPressTimer = setTimeout(() => {
-    dragSourceNode = node;
-    const pos = e.position;
-    isLongPressDragging = true;
-    dragSourceNode.ungrabify();
+    tapStartPos = { ...e.renderedPosition }; // store where finger went down
 
 
-if (navigator.vibrate) { navigator.vibrate(50); } 
- dragSourceNode.addClass('is-stretching' ); 
-   // 1. Add node with CLASS
-    tempTargetNode = cy.add({
-        group: 'nodes',
-        data: { id: 'tempGhost' },
-        position: { x: pos.x, y: pos.y }, style: {
-        'background-color': '#4F46E5',
-        'width': 10,
-        'height': 10,
-        'opacity': 0.3, 
-        'events': 'no',
-        'z-index': 9999
-    }
+    longPressTimer = setTimeout(() => {
+        dragSourceNode = node;
+        const pos = e.position;
+        isLongPressDragging = true;
+        dragSourceNode.ungrabify();
+        if (navigator.vibrate) navigator.vibrate(50);
+        dragSourceNode.addClass('is-stretching');
 
 
-    });
-
-
-    // 2. Add edge with CLASS
-    tempEdge = cy.add({
-        group: 'edges',
-        data: { 
-            id: 'tempEdge', 
-            source: dragSourceNode.id(), 
-            target: 'tempGhost' 
-        },
-        classes: 'temp-edge-style' // <--- Use class
-    });
-}, 500);}); 
-
-
-cy.on('tapdrag', (e) => {
-    if (!isLongPressDragging || !tempTargetNode) return;
-    
-    // Update position
-    tempTargetNode.position(e.position);
-    
-    // FORCE RENDER: Sometimes the edge won't update its curve 
-    // unless the source or target 'moves' in a way the renderer notices.
-    tempTargetNode.emit('position'); 
+        tempTargetNode = cy.add({
+            group: 'nodes',
+            data: { id: 'tempGhost' },
+            position: { x: pos.x, y: pos.y },
+            style: {
+                'background-color': '#4F46E5',
+                'width': 10, 'height': 10,
+                'opacity': 0.3, 'events': 'no', 'z-index': 9999
+            }
+        });
+        tempEdge = cy.add({
+            group: 'edges',
+            data: { id: 'tempEdge', source: dragSourceNode.id(), target: 'tempGhost' },
+            classes: 'temp-edge-style'
+        });
+    }, 500);
 });
 
 
+cy.on('tapdrag', (e) => {
+    // FIX 1: Only cancel the timer if the finger moved a meaningful distance
+    if (longPressTimer && !isLongPressDragging && tapStartPos) {
+        const rp = e.renderedPosition;
+        const dx = rp.x - tapStartPos.x;
+        const dy = rp.y - tapStartPos.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist > LONG_PRESS_MOVE_THRESHOLD) {
+            clearTimeout(longPressTimer);
+            longPressTimer = null;
+        }
+    }
 
 
-// 2. If the user moves too early or lets go, cancel the timer
-cy.on('tapend drag', () => {
+    if (!isLongPressDragging || !tempTargetNode) return;
+    tempTargetNode.position(e.position);
+    tempTargetNode.emit('position');
+});
+
+
+cy.on('tapend', (e) => {
+    // Always clean up the timer
     if (longPressTimer) {
         clearTimeout(longPressTimer);
         longPressTimer = null;
     }
-});
 
 
-// 3. Update the stretching edge
-
-
-
-
-// 4. Final Release logic
-cy.on('tapend', (e) => {
     if (!isLongPressDragging) return;
 
 
     const endPos = e.position;
-    // Check if we are over a different person node
-    const targetNode = (e.target !== cy && e.target.isNode() && e.target.data('type') === 'person' && e.target.id() !== dragSourceNode.id()) 
-                       ? e.target 
-                       : null;
+
+
+    // FIX 2: If released too close to the source node, do nothing
+    const sourcePos = dragSourceNode.position();
+    const dx = endPos.x - sourcePos.x;
+    const dy = endPos.y - sourcePos.y;
+    const distFromSource = Math.sqrt(dx * dx + dy * dy);
+    const sourceRadius = (dragSourceNode.width() / 2) + 10; // node radius + small buffer
 
 
     // Cleanup
-dragSourceNode.removeClass('is-stretching'); 
-    if(tempEdge) cy.remove(tempEdge);
-    if(tempTargetNode) cy.remove(tempTargetNode);
-    if(dragSourceNode) dragSourceNode.grabify();
+    dragSourceNode.removeClass('is-stretching');
+    if (tempEdge) cy.remove(tempEdge);
+    if (tempTargetNode) cy.remove(tempTargetNode);
+    dragSourceNode.grabify();
+
+
+    if (distFromSource < sourceRadius) {
+        // Released inside/on the source node — do nothing
+        isLongPressDragging = false;
+        dragSourceNode = null;
+        tapStartPos = null;
+        return;
+    }
+    // Check if released over an existing person node
+    const realTarget = cy.renderer().findNearestElement(endPos.x, endPos.y, true);
+    const targetNode = (
+        realTarget &&
+        realTarget.isNode() &&
+        realTarget.data('type') === 'person' &&
+        realTarget.id() !== dragSourceNode.id()
+    ) ? realTarget : null;
 
 
     if (targetNode) {
-        // Create edge to existing person
         recordState();
         const newEdge = cy.add({
             group: 'edges',
-            data: { 
-                source: dragSourceNode.id(), target: targetNode.id(), 
-                arrow: 'triangle', sArrow: 'none', lineStyle: 'dotted' 
+            data: {
+                source: dragSourceNode.id(), target: targetNode.id(),
+                arrow: 'triangle', sArrow: 'none', lineStyle: 'dotted'
             }
         });
         updateElist();
         showEdgeEdit(newEdge[0]);
-    } else if (e.target === cy) {
-        // Create new person + edge
+    } else {
+        // Released on empty canvas — create new node + edge
         recordState();
         const newId = 'p' + Date.now();
         const newElems = cy.add([
@@ -898,20 +897,18 @@ dragSourceNode.removeClass('is-stretching');
                 group: 'nodes',
                 data: { id: newId, type: 'person', name: '?', color: '#4F46E5' },
                 position: { x: endPos.x, y: endPos.y }
-            },
-            {
+            },  {
                 group: 'edges',
                 data: { source: dragSourceNode.id(), target: newId, arrow: 'triangle', lineStyle: 'dotted' }
-            }
+                }
         ]);
-   const personNode = cy.getElementById(newId);
-    cy.elements().unselect();
-       showPersonEdit(personNode);
-  setTimeout(() => {
-        const nameInput = document.getElementById('edit-node-name');
-        nameInput.focus();
-        nameInput.select(); // Select the text so typing replaces it
-    }, 100);
+        const personNode = cy.getElementById(newId);
+        cy.elements().unselect();
+        showPersonEdit(personNode);
+        setTimeout(() => {
+            const nameInput = document.getElementById('edit-node-name');
+            nameInput.focus(); nameInput.select();
+        }, 100);
         updatePlist();
         updateElist();
         showPersonEdit(newElems[0]);
@@ -920,9 +917,8 @@ dragSourceNode.removeClass('is-stretching');
 
     isLongPressDragging = false;
     dragSourceNode = null;
+    tapStartPos = null;
 });
-
-
 
 
 
