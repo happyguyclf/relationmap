@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RelationMap v10.3</title>
+    <title>RelationMap v10.6</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.26.0/cytoscape.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/webcola@3.4.0/WebCola/cola.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/cytoscape-cola@2.5.1/cytoscape-cola.min.js"></script>
@@ -13,6 +13,10 @@
 <link rel="apple-touch-icon" href="iconApp.png"> 
 <script> if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js') .then(() => console.log("Service Worker Registered")); }
  </script>
+
+
+
+
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { display: flex; height: 100vh; font-family: -apple-system, sans-serif; background: #f8fafc; overflow: hidden; }
@@ -58,6 +62,22 @@
         h1 { color: #606263; font-size: 1.1rem; font-weight: 800; margin-bottom: 15px; }
 
 
+    .export-btn {
+        padding: 12px;
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        background: white;
+        cursor: pointer;
+        font-weight: 500;
+        transition: all 0.2s;
+        color: #4F46E5;
+    }
+    .export-btn:hover {
+        background: #f5f5ff;
+        border-color: #4F46E5;
+    }
+
+
 .credits {
     position: absolute;
     top: 7px;  left: 7px;    
@@ -74,6 +94,9 @@
 
 
         .section-label { font-size: 10px; font-weight: 800; color: #94a3b8; text-transform: uppercase; margin: 18px 0 6px; }
+
+
+
 
         button { width: 100%; padding: 8px; margin-bottom: 5px; border-radius: 6px; border: 1px solid #e2e8f0; cursor: pointer; font-weight: 600; font-size: 12px; transition: 0.2s; }
         .btn-main { background: #4F46E5; color: white; border: none; }
@@ -239,7 +262,7 @@ display: flex; align-items: center; justify-content: center;line-height: 1; padd
         <input type="text" id="search-input" placeholder="Search & Fly..." oninput="runSearch()">
         <div style="display:flex; gap:4px;">
             <button onclick="undo()">Undo</button>
-            <button onclick="saveData()">Export</button>
+            <button onclick="showExportModal()">Export</button>
            <button id="loadButton" onclick="loadData(event)">Load</button>
         </div>
 <input type="file" id="fileInput" style="display:none" onchange="handleBrowserFile(event)">
@@ -323,7 +346,27 @@ display: flex; align-items: center; justify-content: center;line-height: 1; padd
     </div>
 </div>
                
-        <button onclick="exportMermaid()" style="margin-top:20px; font-size:14px; color:#4F46E5; background:none; border:none; text-decoration:underline;">Export Mermaid.md</button>
+
+
+<div id="export-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:9999; align-items:center; justify-content:center;">
+    <div style="background:white; padding:24px; border-radius:12px; width:280px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); text-align: center;">
+        <h3 style="margin-top:0; margin-bottom:20px; font-family: sans-serif; color: #333;">Export to...</h3>
+        
+        <div style="display: flex; flex-direction: column; gap: 12px;">
+            <button onclick="handleExport('png')" class="export-btn">PNG Image</button>
+            <button onclick="handleExport('jpg')" class="export-btn">JPG Image</button>
+            <button onclick="handleExport('mermaid')" class="export-btn">Mermaid Code</button>
+            <button onclick="handleExport('json')" class="export-btn">JSON File</button>
+        </div>
+
+
+        <button onclick="closeExportModal()" style="margin-top: 20px; background: none; border: none; color: #666; cursor: pointer; font-size: 14px;">Cancel</button>
+    </div>
+</div>
+
+
+
+
 
 
 <div style="display:flex; justify-content: center; padding:10px; border-top:1px solid #eee; margin-top:auto; margin-bottom: 80px;">
@@ -344,7 +387,7 @@ display: flex; align-items: center; justify-content: center;line-height: 1; padd
     <div class="save-indicator" id="save-status">Cloud Sync Ready</div>
     <div id="cy"></div>
     <canvas id="overlay-canvas"></canvas>
-    <div class="credits">RelationMap v10.3 Created by HappyGuy119</div>
+    <div class="credits">RelationMap v10.6 Created by HappyGuy119</div>
     <div class="map-controls">
         <button class="mini-btn" onclick="runAutoLayout()">Auto Layout</button>
         <button class="mini-btn" onclick="cy.fit(null, 50)">Zoom to Fit</button>
@@ -571,6 +614,12 @@ window.onload = () => {
 };
 
 
+
+
+
+
+
+
 //dashboard
 // Initialize ID
 let currentMapId = localStorage.getItem('active_map_id') || 'map_' + Date.now();
@@ -733,7 +782,7 @@ const throttledDrawGroups = throttle(drawGroups, 16); // ~60fps
             ctx.beginPath(); ctx.fillStyle = g.color + '15'; ctx.strokeStyle = g.color + '44';
             ctx.moveTo(hull[0].x, hull[0].y); for(let i=1; i<hull.length; i++) ctx.lineTo(hull[i].x, hull[i].y);
             ctx.closePath(); ctx.fill(); ctx.stroke();
-            ctx.font = "bold 11px sans-serif"; ctx.fillStyle = g.color; ctx.globalAlpha = 0.4;
+            ctx.font = "bold 16px sans-serif"; ctx.fillStyle = g.color; ctx.globalAlpha = 0.4;
             ctx.fillText(g.name.toUpperCase(), sumX/nodes.length - 20, sumY/nodes.length);
             ctx.globalAlpha = 1;
         });
@@ -897,8 +946,13 @@ cy.on('tapend', (e) => {
                 group: 'nodes',
                 data: { id: newId, type: 'person', name: '?', color: '#4F46E5' },
                 position: { x: endPos.x, y: endPos.y }
-            },  {
-                group: 'edges',
+            },    {
+            group: 'nodes',
+            data: { id: newId + '_n', type: 'note', text: '' },
+            position: { x: endPos.x, y: endPos.y + 35 },
+            grabbable: false, selectable: false
+        },
+         {     group: 'edges',
                 data: { source: dragSourceNode.id(), target: newId, arrow: 'triangle', lineStyle: 'dotted' }
                 }
         ]);
@@ -1369,7 +1423,15 @@ const lli = document.createElement('li');
     }); autoSave();
 }
  
-  function exportMermaid() { let m = "flowchart LR\n"; cy.nodes('[type="person"]').forEach(n => { m += `    ${n.id()}["${n.data('name')}"]\n`; }); cy.edges().forEach(e => { let arrow = (e.data('arrow') !== 'none' && e.data('sArrow') !== 'none') ? "<-->" : (e.data('arrow') !== 'none' ? "-->" : (e.data('sArrow') !== 'none' ? "<--" : "---")); m += `    ${e.source().id()} ${arrow} ${e.target().id()}\n`; }); Object.keys(groups).forEach(id => { if(groups[id].members.length > 0) m += `    subgraph ${id}["${groups[id].name}"]\n        ${groups[id].members.join('\n        ')}\n    end\n`; }); const blob = new Blob([m], {type: "text/plain"}); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = "mermaid.md"; a.click(); }
+
+
+function exportToMermaid() {
+    let m = "flowchart LR\n"; cy.nodes('[type="person"]').forEach(n => { m += `    ${n.id()}["${n.data('name')}"]\n`; }); cy.edges().forEach(e => { let arrow = (e.data('arrow') !== 'none' && e.data('sArrow') !== 'none') ? "<-->" : (e.data('arrow') !== 'none' ? "-->" : (e.data('sArrow') !== 'none' ? "<--" : "---")); m += `    ${e.source().id()} ${arrow} ${e.target().id()}\n`; }); Object.keys(groups).forEach(id => { if(groups[id].members.length > 0) m += `    subgraph ${id}["${groups[id].name}"]\n        ${groups[id].members.join('\n        ')}\n    end\n`; }); const blob = new Blob([m], {type: "text/plain"});    
+    // Copy to clipboard or download as text
+    navigator.clipboard.writeText(m).then(() => {
+        alert("Mermaid code copied to clipboard!");
+    });
+}
 
 
 // Clear all
@@ -1390,15 +1452,143 @@ function executeClearAll() {
 }
 
 
+function showExportModal() {
+    document.getElementById('export-modal').style.display = 'flex';}
+
+
+function closeExportModal() {
+    document.getElementById('export-modal').style.display = 'none';}
+
+
+function handleExport(format) {
+    closeExportModal();
+    switch(format) {
+        case 'png': exportImage('png'); 
+            break;
+        case 'jpg':
+            exportImage('jpg'); 
+            break;
+        case 'mermaid':
+            exportToMermaid();
+            break;
+        case 'json':
+            saveData();
+            break;
+    }
+}
+
+
+
+
+
+
+function exportImage(format = 'png') {
+    const scale = 4; // High-res multiplier
+    const bBox = cy.elements().boundingBox(); // Get the total area of the map
+    
+    // 1. Get the Cytoscape layer (includes nodes and edges)
+    const cyBlob = cy.png({
+        output: 'base64',
+        full: true,
+        bg: 'transparent', // We handle the white background ourselves
+        scale: scale
+    });
+
+
+    const exportCanvas = document.createElement('canvas');
+    const exportCtx = exportCanvas.getContext('2d');
+    
+    // Size the canvas based on the graph's total bounding box
+    exportCanvas.width = bBox.w * scale;
+    exportCanvas.height = bBox.h * scale;
+
+
+    const cyImg = new Image();
+    cyImg.onload = () => {
+        // A. Draw solid background
+        exportCtx.fillStyle = '#ffffff';
+        exportCtx.fillRect(0, 0, exportCanvas.width, exportCanvas.height);
+
+
+        // B. Draw Group Bubbles shifted to the Bounding Box offset
+        groupOrder.forEach(id => {
+            const g = groups[id];
+            if (!g || !g.visible || g.members.length === 0) return;
+            const nodes = g.members.map(mid => cy.getElementById(mid)).filter(n => n.length > 0);
+            if (nodes.length === 0) return;
+
+
+            let pts = [];
+            let sumX = 0, sumY = 0;
+            const r = 40 * scale; // Adjust radius for export scale
+
+
+            nodes.forEach(n => {
+                // IMPORTANT: Use .position() (model coords), NOT .renderedPosition()
+                const pos = n.position(); 
+                // Offset the position relative to the bounding box's top-left corner
+                const offsetX = (pos.x - bBox.x1) * scale;
+                const offsetY = (pos.y - bBox.y1) * scale;
+                
+                sumX += offsetX; sumY += offsetY;
+                for(let i=0; i<10; i++) {
+                    pts.push({ 
+                        x: offsetX + r * Math.cos(i*Math.PI/4), 
+                        y: offsetY + r * Math.sin(i*Math.PI/4) 
+                    });
+                }
+            });
+
+
+            const hull = getConvexHull(pts);
+            exportCtx.beginPath();
+            exportCtx.fillStyle = g.color + '15';
+            exportCtx.strokeStyle = g.color + '44';
+            exportCtx.lineWidth = 1 * scale;
+
+
+            exportCtx.moveTo(hull[0].x, hull[0].y);
+            for(let i=1; i<hull.length; i++) exportCtx.lineTo(hull[i].x, hull[i].y);
+            exportCtx.closePath();
+            
+            exportCtx.fill();
+            exportCtx.stroke();
+
+
+            // C. Draw Labels
+            exportCtx.font = `bold ${16 * scale}px sans-serif`;
+            exportCtx.fillStyle = g.color;
+            exportCtx.globalAlpha = 0.4;
+            exportCtx.fillText(g.name.toUpperCase(), sumX/nodes.length - (20 * scale), sumY/nodes.length);
+            exportCtx.globalAlpha = 1;
+        });
+
+
+        // D. Overlay the Cytoscape nodes/edges
+        exportCtx.drawImage(cyImg, 0, 0, exportCanvas.width, exportCanvas.height);
+
+
+        // 5. Download the result
+        const link = document.createElement('a');
+        link.download = `mindmap-export.${format}`;
+        link.href = exportCanvas.toDataURL(`image/${format === 'png' ? 'png' : 'jpeg'}`, 1.0);
+        link.click();
+    };
+    
+    cyImg.src = 'data:image/png;base64,' + cyBlob;
+}
+
+
+
 window.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && document.getElementById('clear-modal').style.display === 'flex') {closeClearModal();}
-});
-window.addEventListener('keydown', (e) => {
-        if (e.key === 'Delete') {
+    if (e.key === 'Escape' && document.getElementById('clear-modal').style.display === 'flex') {closeClearModal();}; 
+if (e.key === 'Delete') {
         if (['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
         deleteSelected();
     }
 });
+
+
   </script>
 </body>
 </html>
