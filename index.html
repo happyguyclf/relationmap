@@ -4,6 +4,15 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Yestograph — Visual Thinking Tools</title>
+<link rel="manifest" href="/manifest.json">
+
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Yestograph">
+<link rel="apple-touch-icon" href="/icon-main.png">
+
+<meta name="theme-color" content="#2563eb">
+
   <style>
     :root {
       --bg-color: #fcfcfc;
@@ -128,6 +137,16 @@
       <p>© 2026 Yestograph, by HappyGuy119. Built with privacy-first local storage.</p>
     </footer>
   </div>
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      // Register the Root Service Worker
+      navigator.serviceWorker.register('/sw.js')
+        .then(reg => console.log('Yestograph Hub SW Registered!', reg.scope))
+        .catch(err => console.log('Root SW Registration failed:', err));
+    });
+  }
+</script>
 
 </body>
 </html>
