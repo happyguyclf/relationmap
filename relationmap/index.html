@@ -7,7 +7,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.26.0/cytoscape.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/webcola@3.4.0/WebCola/cola.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/cytoscape-cola@2.5.1/cytoscape-cola.min.js"></script>
-<link rel="manifest" href="manifest.json">
+<link rel="manifest" href="./manifest.json">
 <meta name="apple-mobile-web-app-capable" content="yes"> 
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"> 
 <link rel="apple-touch-icon" href="iconApp.png"> 
@@ -629,11 +629,11 @@ function toggleDashboard(show) {
 function renderMapList() {
     const grid = document.getElementById('map-grid');
     grid.innerHTML = ''; // Clear current list
-    const keys = Object.keys(localStorage).filter(k => k.startsWith('map_'));
+    const keys = Object.keys(localStorage).filter(k => k.startsWith('relmap_'));
     keys.forEach(key => {
         const rawData = localStorage.getItem(key);
         const mapData = JSON.parse(rawData);
-        const id = key.replace('map_', '');
+        const id = key.replace('relmap_', '');
         
         const card = document.createElement('div');
         card.className = 'map-card';
@@ -649,7 +649,7 @@ function renderMapList() {
 
 
 function switchMap(fullKey) {
-    currentMapId = fullKey.replace('map_', '');
+    currentMapId = fullKey.replace('relmap_', '');
     localStorage.setItem('active_map_id', currentMapId);
     
     const saved = localStorage.getItem(fullKey);
@@ -661,7 +661,7 @@ function switchMap(fullKey) {
 
 function createNewMap() {
     if(confirm("Start a new map? Your current work is auto-saved.")) {
-        currentMapId = 'map_' + Date.now();
+        currentMapId = Date.now();
         localStorage.setItem('active_map_id', currentMapId);
         cy.elements().remove(); // Clear canvas
   activePersonNode = null; activeEdge = null; activeGroupId = null; currentPanel = null;      hidePanels();  updatePlist();    updateElist();    groups = {}; updateUI(); 
