@@ -1,8 +1,9 @@
-const CACHE_NAME = 'mindmap-v10.7'; // Change this number every time you update!
+const CACHE_NAME = 'relationmap-v10.7'; // Change this number every time you update!
 const ASSETS = [
-  '/',
-  '/index.html',
-  '/iconApp.png'
+  './',
+  './index.html',
+'./manifest.json', 
+  './iconApp.png'
 ];
 
 // 1. Install: Save files and skip waiting
@@ -45,3 +46,4 @@ self.addEventListener('fetch', (event) => {
     })
   );
 });
+
