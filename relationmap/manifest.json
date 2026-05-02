@@ -1,16 +1,18 @@
 {
   "name": "RelationMap",
   "short_name": "RelationMap",
-  "start_url": "index.html",
+  "description": "Visualizing complex relationships and mindmaps.",
+  "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#000000",
   "icons": [
     {
-      "src": "iconApp.png",
+      "src": "./iconApp.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
     }
   ]
 }
+
