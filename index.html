@@ -92,21 +92,23 @@
       color: #9ca3af;
     }
   </style>
+<script>
+   const hasData = localStorage.getItem('active_map_id') || 
+                  Object.keys(localStorage).some(key => key.startsWith('relmap_'));
+  
+  const isRoot = window.location.pathname === "/" || window.location.pathname === "/index.html";
 
-  <script>
-    // AUTOMATIC MIGRATION / REDIRECT LOGIC
-    // If returning users are on the root homepage but have saved data from the old site,
-    // we helpfully point them to the correct tool folder.
-    if (localStorage.getItem('map_data') || localStorage.getItem('mindmap_data')) {
-      window.location.href = "./relationmap/";
-    }
-  </script>
+  if (hasData && isRoot) {
+      // Direct them to the subfolder
+      window.location.replace("./relationmap/");
+  }
+</script>
 </head>
 <body>
 
   <div class="container">
     <header>
-      <h1>Yestograph</h1>
+      <h1>YesToGraph</h1>
       <p>Visual thinking and problem-solving tools.</p>
     </header>
 
@@ -123,10 +125,11 @@
     </div>
 
     <footer>
-      <p>© 2026 Yestograph. Built with privacy-first local storage.</p>
+      <p>© 2026 Yestograph, by HappyGuy119. Built with privacy-first local storage.</p>
     </footer>
   </div>
 
 </body>
 </html>
+
 
