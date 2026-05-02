@@ -520,7 +520,7 @@ let saveTimeout;
         const data = {title: document.getElementById('map-title').innerText.trim() || "Untitled Map",  elements: cy.elements().map(e=>({group:e.isNode()?'nodes':'edges', data:e.data(), position:e.position()})), groups, groupOrder, lastUpdated: new Date().getTime()};
 const jsonString = JSON.stringify(data);
    // A. Local Backup (Instant)
-        localStorage.setItem(`map_${currentMapId}`, jsonString);
+        localStorage.setItem(`relmap_${currentMapId}`, jsonString);
      localStorage.setItem('active_map_id', currentMapId);
  // B. Server Sync (Wait for user to stop typing/dragging for 2 seconds)
     clearTimeout(saveTimeout);
@@ -595,7 +595,7 @@ window.onload = () => {
         // 2. Otherwise, get the last map the user touched
         currentMapId = localStorage.getItem('active_map_id') || 'temp_map_1';
     }
-    const saved = localStorage.getItem(`map_${currentMapId}`);
+    const saved = localStorage.getItem(`relmap_${currentMapId}`);
     if(saved) {
         processMapJSON(saved);
     }
