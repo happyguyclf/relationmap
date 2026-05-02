@@ -98,7 +98,7 @@
     // If returning users are on the root homepage but have saved data from the old site,
     // we helpfully point them to the correct tool folder.
     if (localStorage.getItem('map_data') || localStorage.getItem('mindmap_data')) {
-      window.location.href = "/relationmap";
+      window.location.href = "./relationmap/";
     }
   </script>
 </head>
@@ -111,7 +111,7 @@
     </header>
 
     <div class="tools-grid">
-      <a href="/relationmap" class="tool-card">
+      <a href="./relationmap/" class="tool-card">
         <h3>RelationMap</h3>
         <p>Map out complex ideas, connections, and character structures instantly. Saves locally to your browser.</p>
       </a>
