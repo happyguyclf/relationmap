@@ -1,4 +1,4 @@
-const CACHE_NAME = 'mindmap-v10.6'; // Change this number every time you update!
+const CACHE_NAME = 'mindmap-v10.7'; // Change this number every time you update!
 const ASSETS = [
   '/',
   '/index.html',
