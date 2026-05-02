@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Yestograph — Visual Thinking Tools</title>
+  <style>
+    :root {
+      --bg-color: #fcfcfc;
+      --text-color: #1a1a1a;
+      --accent-color: #2563eb;
+      --card-bg: #ffffff;
+      --border-color: #e5e7eb;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      line-height: 1.5;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 600px;
+      width: 100%;
+      text-align: center;
+    }
+
+    header h1 {
+      font-size: 2.5rem;
+      font-weight: 800;
+      letter-spacing: -0.025em;
+      margin-bottom: 8px;
+    }
+
+    header p {
+      color: #6b7280;
+      font-size: 1.1rem;
+      margin-bottom: 40px;
+    }
+
+    .tools-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 20px;
+      margin-bottom: 40px;
+    }
+
+    .tool-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 24px;
+      text-align: left;
+      transition: all 0.2s ease;
+      text-decoration: none;
+      color: inherit;
+      display: block;
+    }
+
+    .tool-card:hover {
+      border-color: var(--accent-color);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+    }
+
+    .tool-card h3 {
+      font-size: 1.25rem;
+      color: var(--accent-color);
+      margin-bottom: 6px;
+    }
+
+    .tool-card p {
+      color: #4b5563;
+      font-size: 0.95rem;
+    }
+
+    footer {
+      font-size: 0.85rem;
+      color: #9ca3af;
+    }
+  </style>
+
+  <script>
+    // AUTOMATIC MIGRATION / REDIRECT LOGIC
+    // If returning users are on the root homepage but have saved data from the old site,
+    // we helpfully point them to the correct tool folder.
+    if (localStorage.getItem('map_data') || localStorage.getItem('mindmap_data')) {
+      window.location.href = "/mindmap";
+    }
+  </script>
+</head>
+<body>
+
+  <div class="container">
+    <header>
+      <h1>Yestograph</h1>
+      <p>Visual thinking and problem-solving tools.</p>
+    </header>
+
+    <div class="tools-grid">
+      <a href="/relationmap" class="tool-card">
+        <h3>RelationMap</h3>
+        <p>Map out complex ideas, connections, and character structures instantly. Saves locally to your browser.</p>
+      </a>
+
+      <div class="tool-card" style="opacity: 0.6; cursor: not-allowed;">
+        <h3>ConceptMap (Coming Soon)</h3>
+        <p>Visualize prescriptive workflows and decision models.</p>
+      </div>
+    </div>
+
+    <footer>
+      <p>© 2026 Yestograph. Built with privacy-first local storage.</p>
+    </footer>
+  </div>
+
+</body>
+</html>
+
